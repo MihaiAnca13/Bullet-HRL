@@ -13,7 +13,7 @@ ul = [7]*pandaNumDofs
 #joint ranges for null space (todo: set them to proper range)
 jr = [7]*pandaNumDofs
 #restposes for null space
-jointPositions=[0.98, 0.458, 0.31, -2.24, -0.30, 2.66, 2.32, 0.02, 0.02]
+jointPositions = [1.076, 0.060, 0.506, -2.020, -0.034, 2.076, 2.384, 0.03, 0.03]
 rp = jointPositions
 
 class FetchBulletSim(object):
@@ -132,11 +132,6 @@ class FetchBulletSim(object):
 
 
     self.bullet_client.submitProfileTiming()
-
-
-
-
-
 
 # remainings of all class:
     # alpha = 0.9 #0.99

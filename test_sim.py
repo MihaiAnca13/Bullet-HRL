@@ -33,9 +33,9 @@ for i in range (100000):
 	panda.bullet_client.submitProfileTiming("full_step")
 	panda.step()
 
-	# if i % 1000 == 0:
-	# 	print('reseting sim')
-	# 	panda.reset()
+	if i % 1000 == 0:
+		print('reseting sim')
+		panda.reset()
 
 	p.stepSimulation()
 	if createVideo:

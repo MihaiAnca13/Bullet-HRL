@@ -9,7 +9,7 @@
     <visual>
       <origin rpy="1.570796 0 0" xyz="0.0 0 0"/>
       <geometry>
-        <cylinder radius="0.002" length="0.03"/>
+        <cylinder radius="0.005" length="0.05"/>
       </geometry>
        <material name="blue">
         <color rgba="0.1 0.3 0.9 1"/>
