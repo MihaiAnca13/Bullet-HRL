@@ -2,10 +2,14 @@ import time
 import numpy as np
 import math
 
+
 useNullSpace = 1
 ikSolver = 0
 pandaEndEffectorIndex = 11 #8
 pandaNumDofs = 7
+
+RENDER_HEIGHT = 720
+RENDER_WIDTH = 960
 
 ll = [-7]*pandaNumDofs
 #upper limits for null space (todo: set them to proper range)
@@ -83,6 +87,8 @@ class FetchBulletSim(object):
     self.secondary_state = self.bullet_client.saveState()
 
     self.goal_pos = None
+
+    self.reset()
     # self.t = 0.
 
   def _sample_goal(self):
@@ -113,10 +119,11 @@ class FetchBulletSim(object):
       self.bullet_client.restoreState(self.secondary_state)
 
     self._sample_goal()
-    # 
+
+    self.bullet_client.stepSimulation()
+
 
   def step(self, action):
-    self.bullet_client.submitProfileTiming("step")
     assert action.shape == (4,)
     action = action.copy()
     pos_ctrl, gripper_ctrl = action[:3], action[3]
@@ -130,9 +137,8 @@ class FetchBulletSim(object):
     current_gripper_pos = self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
     target_gripper_pos = current_gripper_pos + pos_ctrl
 
-    self.bullet_client.submitProfileTiming("IK")
     jointPoses = self.bullet_client.calculateInverseKinematics(self.panda, pandaEndEffectorIndex, target_gripper_pos, rot_ctrl, ll, ul, jr, rp, maxNumIterations=20)
-    self.bullet_client.submitProfileTiming()
+
 
     for i in range(pandaNumDofs):
       self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, jointPoses[i], force=5 * 240.)
@@ -141,8 +147,28 @@ class FetchBulletSim(object):
     for i in [9,10]:
       self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl ,force=10)
 
-    self.bullet_client.submitProfileTiming()
     self.bullet_client.stepSimulation()
+
+    return self._get_obs()
+
+  def _get_obs(self):
+    gripper_pos, gripper_velp, gripper_velr = np.take(self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex, computeLinkVelocity=True), [0, 6, 7])
+    gripper_state = self.bullet_client.getJointState(self.panda, 9)[0]
+
+    obj_pos = self.bullet_client.getBasePositionAndOrientation(self.cubeId)[0]
+    obj_velp, obj_velr = self.bullet_client.getBaseVelocity(self.cubeId)
+
+    obj_rel_pos = np.array(obj_pos) - np.array(gripper_pos)
+
+    obs = np.concatenate([
+            np.array(gripper_pos), np.array(obj_pos), obj_rel_pos, np.array([gripper_state]), np.array(obj_velp), np.array(obj_velr), np.array(gripper_velp), np.array(gripper_velr)
+        ])
+
+    return {
+      'observation': obs.copy(),
+      'achieved_goal': np.array(gripper_pos).copy(),
+      'desired_goal': self.goal_pos.copy()
+    }
 
   def get_gripper_pos(self):
     return self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]

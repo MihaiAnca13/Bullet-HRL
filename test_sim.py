@@ -28,10 +28,10 @@ p.setGravity(0,-9.8,0)
 panda = panda_sim.FetchBulletSim(p,[0,0,0])
 panda.control_dt = timeStep
 
-logId = panda.bullet_client.startStateLogging(panda.bullet_client.STATE_LOGGING_PROFILE_TIMINGS, "log.json")
-panda.bullet_client.submitProfileTiming("start")
+# logId = panda.bullet_client.startStateLogging(panda.bullet_client.STATE_LOGGING_PROFILE_TIMINGS, "log.json")
+# panda.bullet_client.submitProfileTiming("start")
 for i in range (100000):
-	panda.bullet_client.submitProfileTiming("full_step")
+	# panda.bullet_client.submitProfileTiming("full_step")
 
 	if i % 1000 == 0:
 		print('reseting sim')
@@ -42,9 +42,9 @@ for i in range (100000):
 	if createVideo:
 		p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING,1)
 	if not createVideo:
-		pass
-		# time.sleep(timeStep)
-	panda.bullet_client.submitProfileTiming()
-panda.bullet_client.submitProfileTiming()
-panda.bullet_client.stopStateLogging(logId)
+		# pass
+		time.sleep(timeStep)
+	# panda.bullet_client.submitProfileTiming()
+# panda.bullet_client.submitProfileTiming()
+# panda.bullet_client.stopStateLogging(logId)
 	
