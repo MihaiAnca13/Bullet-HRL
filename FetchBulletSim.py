@@ -77,61 +77,80 @@ class FetchBulletSim(object):
     self.initial_state = self.bullet_client.saveState()
 
     # generate and save pose with object grasped
-    gripper_pos = self.bullet_client.getLinkState(self.panda, 11)[0]
+    gripper_pos = self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
     box_orientation = self.bullet_client.getQuaternionFromEuler([math.pi/2.,0.,0.])
     self.bullet_client.resetBasePositionAndOrientation(self.cubeId, gripper_pos, box_orientation)
     self.secondary_state = self.bullet_client.saveState()
 
-
+    self.goal_pos = None
     # self.t = 0.
 
   def _sample_goal(self):
-    gripper_pos = self.bullet_client.getLinkState(self.panda, 11)[0] # panda_grasptarget
-    goal_orientation = self.bullet_client.getQuaternionFromEuler([math.pi/2.,0.,0.])
+    self.goal_pos = np.random.uniform([-0.136, 0.03499, 0.-0.718], [0.146, 0.0349, -0.457])
+    orn = self.bullet_client.getQuaternionFromEuler([math.pi/2.,0.,0.])
 
-    height_offset = 0.03
     if np.random.random() < 0.5:
-      height_offset += np.random.uniform(0, 0.2)
+      self.goal_pos[1] += 0.2 # height offset  
 
-    goal_pos = gripper_pos + np.random.uniform(-0.2, 0.2)
+    self.bullet_client.resetBasePositionAndOrientation(self.targetId, self.goal_pos, orn)
 
 
   def _randomize_obj_start(self):
-    pass
+    object_pos = np.random.uniform([-0.136, 0.03499, 0.-0.718], [0.146, 0.0349, -0.457])
+    orn = self.bullet_client.getQuaternionFromEuler([math.pi/2.,0.,0.])
+    self.bullet_client.resetBasePositionAndOrientation(self.cubeId, object_pos, orn)
+
+    # (0.14620011083425424, 0.034989999999999744, -0.4577289226704112)
+    # (-0.13639202772104536, 0.03498999999999295, -0.7185703988375852)
 
 
   def reset(self):
     # reset initial positions
-    if np.random.random() < 0.5:
+    if np.random.random() < 1:
       self.bullet_client.restoreState(self.initial_state)
       self._randomize_obj_start()
     else:
       self.bullet_client.restoreState(self.secondary_state)
 
+    self._sample_goal()
     # 
 
-  def step(self):
-    # if self.state==6:
-    #   self.finger_target = 0.01
-    # if self.state==5:
-    self.finger_target = 0.04 
+  def step(self, action):
     self.bullet_client.submitProfileTiming("step")
+    assert action.shape == (4,)
+    action = action.copy()
+    pos_ctrl, gripper_ctrl = action[:3], action[3]
+    
+    current_gripper_state = self.bullet_client.getJointState(self.panda, 9)[0]
+    gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.01, 0.04)
 
+    pos_ctrl *= 0.05 # limit maximum change in position
+    rot_ctrl = self.bullet_client.getQuaternionFromEuler([math.pi/2.,0.,0.]) # fixed rotation of the end effector, expressed as a quaternion
 
-     #target for fingers
+    current_gripper_pos = self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
+    target_gripper_pos = current_gripper_pos + pos_ctrl
+
+    self.bullet_client.submitProfileTiming("IK")
+    jointPoses = self.bullet_client.calculateInverseKinematics(self.panda, pandaEndEffectorIndex, target_gripper_pos, rot_ctrl, ll, ul, jr, rp, maxNumIterations=20)
+    self.bullet_client.submitProfileTiming()
+
+    for i in range(pandaNumDofs):
+      self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, jointPoses[i], force=5 * 240.)
+
+    #target for fingers
     for i in [9,10]:
-      self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL,self.finger_target ,force= 10)
-
-    orn = self.bullet_client.getQuaternionFromEuler([0.,0.,0.])
-    a = self.bullet_client.getLinkState(self.panda, 9, computeLinkVelocity=False, computeForwardKinematics=False)
-    # need fixed quaternation
-    self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, a[0], orn)
-
-    a = self.bullet_client.getLinkState(self.panda, 10, computeLinkVelocity=False, computeForwardKinematics=False)
-    self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, a[0], orn)
-
+      self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl ,force=10)
 
     self.bullet_client.submitProfileTiming()
+    self.bullet_client.stepSimulation()
+
+  def get_gripper_pos(self):
+    return self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
+
+  def move_finger_markers(self, target_pos1, target_pos2):
+    orn = self.bullet_client.getQuaternionFromEuler([0.,0.,0.])
+    self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, target_pos1, orn)
+    self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, target_pos2, orn)
 
 # remainings of all class:
     # alpha = 0.9 #0.99

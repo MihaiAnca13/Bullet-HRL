@@ -1,5 +1,6 @@
 import pybullet as p
 import pybullet_data as pd
+from pybullet_utils import bullet_client as bc
 import math
 import time
 import numpy as np
@@ -13,7 +14,7 @@ timeStep = 1./fps
 if createVideo:
 	p.connect(p.GUI, options="--minGraphicsUpdateTimeMs=0 --mp4=\"pybullet_grasp.mp4\" --mp4fps="+str(fps) )
 else:
-	p.connect(p.GUI)
+	p = bc.BulletClient(p.GUI)
 
 p.configureDebugVisualizer(p.COV_ENABLE_Y_AXIS_UP,1)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
@@ -31,17 +32,18 @@ logId = panda.bullet_client.startStateLogging(panda.bullet_client.STATE_LOGGING_
 panda.bullet_client.submitProfileTiming("start")
 for i in range (100000):
 	panda.bullet_client.submitProfileTiming("full_step")
-	panda.step()
 
 	if i % 1000 == 0:
 		print('reseting sim')
 		panda.reset()
 
-	p.stepSimulation()
+	panda.step(action=np.array([0., 0., 0., 0.01]))
+
 	if createVideo:
 		p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING,1)
 	if not createVideo:
-		time.sleep(timeStep)
+		pass
+		# time.sleep(timeStep)
 	panda.bullet_client.submitProfileTiming()
 panda.bullet_client.submitProfileTiming()
 panda.bullet_client.stopStateLogging(logId)
