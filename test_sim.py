@@ -1,20 +1,21 @@
+import time
+
+import numpy as np
 import pybullet as p
 import pybullet_data as pd
 from pybullet_utils import bullet_client as bc
-import math
-import time
-import numpy as np
+
 import FetchBulletSim as panda_sim
 
-#video requires ffmpeg available in path
-createVideo=False
-fps=240.
-timeStep = 1./fps
+# video requires ffmpeg available in path
+createVideo = False
+fps = 240.
+timeStep = 1. / fps
 
 if createVideo:
-	p.connect(p.GUI, options="--minGraphicsUpdateTimeMs=0 --mp4=\"pybullet_grasp.mp4\" --mp4fps="+str(fps) )
+    p.connect(p.GUI, options="--minGraphicsUpdateTimeMs=0 --mp4=\"pybullet_grasp.mp4\" --mp4fps=" + str(fps))
 else:
-	p = bc.BulletClient(p.GUI)
+    p = bc.BulletClient(p.GUI)
 
 p.configureDebugVisualizer(p.COV_ENABLE_Y_AXIS_UP,1)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
@@ -30,21 +31,20 @@ panda.control_dt = timeStep
 
 # logId = panda.bullet_client.startStateLogging(panda.bullet_client.STATE_LOGGING_PROFILE_TIMINGS, "log.json")
 # panda.bullet_client.submitProfileTiming("start")
-for i in range (100000):
-	# panda.bullet_client.submitProfileTiming("full_step")
+for i in range(100000):
+    # panda.bullet_client.submitProfileTiming("full_step")
 
-	if i % 1000 == 0:
-		print('reseting sim')
-		panda.reset()
+    if i % 1000 == 0:
+        print('reseting sim')
+        panda.reset()
 
-	panda.step(action=np.array([0., 0., 0., 0.01]))
+    panda.step(action=np.array([0., 0., 0., 0.01]))
 
-	if createVideo:
-		p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING,1)
-	if not createVideo:
-		# pass
-		time.sleep(timeStep)
-	# panda.bullet_client.submitProfileTiming()
+    if createVideo:
+        p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING, 1)
+    if not createVideo:
+        # pass
+        time.sleep(timeStep)
+# panda.bullet_client.submitProfileTiming()
 # panda.bullet_client.submitProfileTiming()
 # panda.bullet_client.stopStateLogging(logId)
-	
