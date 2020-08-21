@@ -19,10 +19,11 @@ rp = jointPositions
 
 
 class FetchBulletSim(object):
-    def __init__(self, bullet_client, offset):
+    def __init__(self, bullet_client, offset, np_random):
         self.bullet_client = bullet_client
         self.bullet_client.setPhysicsEngineParameter(solverResidualThreshold=0)
         self.offset = np.array(offset)
+        self.np_random = np_random
 
         # print("offset=",offset)
         flags = self.bullet_client.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
@@ -34,8 +35,8 @@ class FetchBulletSim(object):
         self.cubeId = self.bullet_client.loadURDF("assets/cube.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
                                                   flags=flags)
 
-        self.markerId = self.bullet_client.loadURDF("assets/marker.urdf", np.array([0.1, 0.2, -0.55]) + self.offset,
-                                                    flags=flags)
+        # self.markerId = self.bullet_client.loadURDF("assets/marker.urdf", np.array([0.1, 0.2, -0.55]) + self.offset,
+        #                                             flags=flags)
 
         self.targetId = self.bullet_client.loadURDF("assets/marker.urdf", np.array([0.15, 0.03, -0.55]) + self.offset,
                                                     flags=flags)
@@ -48,14 +49,13 @@ class FetchBulletSim(object):
 
         # Loading the robotic arm
         orn = [-0.707107, 0.0, 0.0, 0.707107]  # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
-        eul = self.bullet_client.getEulerFromQuaternion([-0.5, -0.5, -0.5, 0.5])
+        # eul = self.bullet_client.getEulerFromQuaternion([-0.5, -0.5, -0.5, 0.5])
         self.panda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, 0]) + self.offset, orn,
                                                  useFixedBase=True, flags=flags)
 
-        index = 0
-        self.control_dt = 1. / 240.
-        self.finger_target = 0
-        self.gripper_height = 0.2
+        # self.control_dt = 1. / 240.
+        # self.finger_target = 0
+        # self.gripper_height = 0.2
 
         # create a constraint to keep the fingers centered
         c = self.bullet_client.createConstraint(self.panda,
@@ -68,12 +68,13 @@ class FetchBulletSim(object):
                                                 childFramePosition=[0, 0, 0])
         self.bullet_client.changeConstraint(c, gearRatio=-1, erp=0.1, maxForce=50)
 
+        index = 0
         # save normal initial state
         for j in range(self.bullet_client.getNumJoints(self.panda)):
             self.bullet_client.changeDynamics(self.panda, j, linearDamping=0, angularDamping=0)
             info = self.bullet_client.getJointInfo(self.panda, j)
             # print("info=",info)
-            jointName = info[1]
+            # jointName = info[1]
             jointType = info[2]
             if (jointType == self.bullet_client.JOINT_PRISMATIC):
                 self.bullet_client.resetJointState(self.panda, j, jointPositions[index])
@@ -95,16 +96,16 @@ class FetchBulletSim(object):
         self.reset()
 
     def _sample_goal(self):
-        self.goal_pos = np.random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
+        self.goal_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
         orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
 
-        if np.random.random() < 0.5:
+        if self.np_random.random() < 0.5:
             self.goal_pos[1] += 0.2  # height offset
 
         self.bullet_client.resetBasePositionAndOrientation(self.targetId, self.goal_pos, orn)
 
     def _randomize_obj_start(self):
-        object_pos = np.random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
+        object_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
         orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
         self.bullet_client.resetBasePositionAndOrientation(self.cubeId, object_pos, orn)
 
@@ -113,7 +114,7 @@ class FetchBulletSim(object):
 
     def reset(self):
         # reset initial positions
-        if np.random.random() < 1:
+        if self.np_random.random() < 1:
             self.bullet_client.restoreState(self.initial_state)
             self._randomize_obj_start()
         else:
@@ -122,6 +123,8 @@ class FetchBulletSim(object):
         self._sample_goal()
 
         self.bullet_client.stepSimulation()
+
+        return self._get_obs()
 
     def step(self, action):
         assert action.shape == (4,)
@@ -172,7 +175,7 @@ class FetchBulletSim(object):
 
         return {
             'observation': obs.copy(),
-            'achieved_goal': np.array(gripper_pos).copy(),
+            'achieved_goal': np.array(obj_pos).copy(),
             'desired_goal': self.goal_pos.copy()
         }
 
@@ -183,3 +186,6 @@ class FetchBulletSim(object):
         orn = self.bullet_client.getQuaternionFromEuler([0., 0., 0.])
         self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, target_pos1, orn)
         self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, target_pos2, orn)
+
+    def close(self):
+        del self.bullet_client
