@@ -126,7 +126,7 @@ class FetchBulletSim(object):
 
         return self._get_obs()
 
-    def step(self, action):
+    def step(self, action, n_substeps=1):
         assert action.shape == (4,)
         action = action.copy()
         pos_ctrl, gripper_ctrl = action[:3], action[3]
@@ -154,7 +154,8 @@ class FetchBulletSim(object):
             self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl,
                                                      force=10)
 
-        self.bullet_client.stepSimulation()
+        for i in range(n_substeps):
+            self.bullet_client.stepSimulation()
 
         return self._get_obs()
 
