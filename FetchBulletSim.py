@@ -32,19 +32,19 @@ class FetchBulletSim(object):
         self.bullet_client.loadURDF("tray/traybox.urdf", [0 + offset[0], 0 + offset[1], -0.6 + offset[2]],
                                     [-0.5, -0.5, -0.5, 0.5], flags=flags)
 
-        self.cubeId = self.bullet_client.loadURDF("assets/cube.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
+        self.cubeId = self.bullet_client.loadURDF("cube.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
                                                   flags=flags)
 
         # self.markerId = self.bullet_client.loadURDF("assets/marker.urdf", np.array([0.1, 0.2, -0.55]) + self.offset,
         #                                             flags=flags)
 
-        self.targetId = self.bullet_client.loadURDF("assets/marker.urdf", np.array([0.15, 0.03, -0.55]) + self.offset,
+        self.targetId = self.bullet_client.loadURDF("marker.urdf", np.array([0.15, 0.03, -0.55]) + self.offset,
                                                     flags=flags)
         self.bullet_client.changeVisualShape(self.targetId, -1, rgbaColor=[1, 0, 0, 1])
 
-        self.finger_marker1Id = self.bullet_client.loadURDF("assets/finger_marker.urdf",
+        self.finger_marker1Id = self.bullet_client.loadURDF("finger_marker.urdf",
                                                             np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
-        self.finger_marker2Id = self.bullet_client.loadURDF("assets/finger_marker.urdf",
+        self.finger_marker2Id = self.bullet_client.loadURDF("finger_marker.urdf",
                                                             np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
 
         # Loading the robotic arm

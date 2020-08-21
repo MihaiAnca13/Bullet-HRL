@@ -20,9 +20,12 @@ def goal_distance(state, target, thresholds):
     return True
 
 
+assets_path = "Bullet-HRL/assets/"
+
+
 class FetchBulletEnv(gym.GoalEnv):
 
-    def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.03, 0.03, 0.03])):
+    def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.03, 0.03, 0.03]), assets_path=assets_path):
         self.time_step = time_step
         self.render_mode = render_mode
         self.thresholds = thresholds
@@ -41,7 +44,8 @@ class FetchBulletEnv(gym.GoalEnv):
         else:
             sys.exit(f'FetchBulletEnv - render mode not supported: {render_mode}')
 
-        bullet_instance.setAdditionalSearchPath(pd.getDataPath())
+        # bullet_instance.setAdditionalSearchPath(pd.getDataPath())
+        bullet_instance.setAdditionalSearchPath(assets_path)
         bullet_instance.setTimeStep(time_step)
         bullet_instance.setGravity(0, -9.8, 0)
         self.sim = FetchBulletSim(bullet_instance, [0, 0, 0], self.np_random)
