@@ -62,6 +62,9 @@ class FetchBulletEnv(gym.GoalEnv):
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
 
+    def render(self, mode=''):
+        raise NotImplementedError()
+
     def reset(self):
         obs = self.sim.reset()
         self.goal = self.sim.goal_pos.copy()
@@ -90,3 +93,14 @@ class FetchBulletEnv(gym.GoalEnv):
 
     def compute_reward(self, achieved_goal, desired_goal, info):
         return int(self._is_success(achieved_goal, desired_goal)) - 1
+
+    def update_markers(self, target):
+        assert len(target) == 4
+        marker_positions = [target[:-1].copy(), target[:-1].copy()]
+        current_finger_position = self.sim.get_gripper_pos()
+        marker_positions[0][2] += current_finger_position[2] + target[-1]
+        marker_positions[1][2] -= current_finger_position[2] + target[-1]
+        self.sim.move_finger_markers(marker_positions)
+
+    def is_gripper_grasping(self):
+        return self.sim.detect_gripper_collision()

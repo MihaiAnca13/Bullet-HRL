@@ -4,6 +4,7 @@ import numpy as np
 import pybullet as p
 import pybullet_data as pd
 from pybullet_utils import bullet_client as bc
+from gym.utils import seeding
 
 import FetchBulletSim as panda_sim
 
@@ -21,12 +22,13 @@ p.configureDebugVisualizer(p.COV_ENABLE_Y_AXIS_UP,1)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
 p.setPhysicsEngineParameter(maxNumCmdPer1ms=1000)
 p.resetDebugVisualizerCamera(cameraDistance=1.3, cameraYaw=38, cameraPitch=-22, cameraTargetPosition=[0.35,-0.13,0])
-p.setAdditionalSearchPath(pd.getDataPath())
+p.setAdditionalSearchPath('assets')
 
 p.setTimeStep(timeStep)
 p.setGravity(0,-9.8,0)
 
-panda = panda_sim.FetchBulletSim(p,[0,0,0])
+np_random, seed = seeding.np_random(1)
+panda = panda_sim.FetchBulletSim(p,[0,0,0], np_random=np_random)
 panda.control_dt = timeStep
 
 # logId = panda.bullet_client.startStateLogging(panda.bullet_client.STATE_LOGGING_PROFILE_TIMINGS, "log.json")
@@ -34,11 +36,8 @@ panda.control_dt = timeStep
 for i in range(100000):
     # panda.bullet_client.submitProfileTiming("full_step")
 
-    if i % 1000 == 0:
-        print('reseting sim')
-        panda.reset()
-
     panda.step(action=np.array([0., 0., 0., 0.01]))
+    print(panda.get_gripper_pos())
 
     if createVideo:
         p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING, 1)

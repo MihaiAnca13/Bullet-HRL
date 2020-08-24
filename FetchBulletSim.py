@@ -114,7 +114,7 @@ class FetchBulletSim(object):
 
     def reset(self):
         # reset initial positions
-        if self.np_random.random() < 1:
+        if self.np_random.random() < 0.5:
             self.bullet_client.restoreState(self.initial_state)
             self._randomize_obj_start()
         else:
@@ -131,7 +131,7 @@ class FetchBulletSim(object):
         action = action.copy()
         pos_ctrl, gripper_ctrl = action[:3], action[3]
 
-        current_gripper_state = self.bullet_client.getJointState(self.panda, 9)[0]
+        current_gripper_state = self.get_gripper_state()
         gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.01, 0.04)
 
         pos_ctrl *= 0.05  # limit maximum change in position
@@ -162,7 +162,7 @@ class FetchBulletSim(object):
     def _get_obs(self):
         gripper_pos, gripper_velp, gripper_velr = np.take(
             self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex, computeLinkVelocity=True), [0, 6, 7])
-        gripper_state = self.bullet_client.getJointState(self.panda, 9)[0]
+        gripper_state = self.get_gripper_state()
 
         obj_pos = self.bullet_client.getBasePositionAndOrientation(self.cubeId)[0]
         obj_velp, obj_velr = self.bullet_client.getBaseVelocity(self.cubeId)
@@ -183,10 +183,26 @@ class FetchBulletSim(object):
     def get_gripper_pos(self):
         return self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
 
-    def move_finger_markers(self, target_pos1, target_pos2):
+    def get_gripper_state(self):
+        return self.bullet_client.getJointState(self.panda, 9)[0]
+
+    def move_finger_markers(self, target_pos):
+        target_pos1, target_pos2 = target_pos
         orn = self.bullet_client.getQuaternionFromEuler([0., 0., 0.])
         self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, target_pos1, orn)
         self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, target_pos2, orn)
 
     def close(self):
         del self.bullet_client
+
+    def detect_gripper_collision(self):
+        aabbMin, aabbMax = self.bullet_client.getAABB(self.panda, 9)
+        # drawing collision line?
+        # f = [aabbMax[0], aabbMin[1], aabbMin[2]]
+        # t = [aabbMax[0], aabbMax[1], aabbMin[2]]
+        # self.bullet_client.addUserDebugLine(f, t, [1, 1, 1])
+        body_link_ids = self.bullet_client.getOverlappingObjects(aabbMin, aabbMax)
+        body_ids = [x[0] for x in body_link_ids]
+        if self.cubeId in body_ids:
+            return True
+        return False
