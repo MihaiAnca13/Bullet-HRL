@@ -20,12 +20,11 @@ rp = jointPositions
 
 
 class FetchBulletSim(object):
-    def __init__(self, bullet_client, offset, np_random, n_substeps=20):
+    def __init__(self, bullet_client, offset, np_random):
         self.bullet_client = bullet_client
         self.bullet_client.setPhysicsEngineParameter(solverResidualThreshold=0)
         self.offset = np.array(offset)
         self.np_random = np_random
-        self.n_substeps = n_substeps
 
         # print("offset=",offset)
         flags = self.bullet_client.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
@@ -128,7 +127,7 @@ class FetchBulletSim(object):
 
         return self._get_obs()
 
-    def step(self, action, rendering=False, time_step=1./30.):
+    def step(self, action, rendering=False, time_step=1./240.):
         assert action.shape == (4,)
         action = action.copy()
         pos_ctrl, gripper_ctrl = action[:3], action[3]
@@ -136,7 +135,7 @@ class FetchBulletSim(object):
         current_gripper_state = self.get_gripper_state()
         gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.01, 0.04)
 
-        pos_ctrl *= 0.05  # limit maximum change in position
+        pos_ctrl *= 0.2  # limit maximum change in position
         rot_ctrl = self.bullet_client.getQuaternionFromEuler(
             [math.pi / 2., 0., 0.])  # fixed rotation of the end effector, expressed as a quaternion
 
@@ -156,11 +155,16 @@ class FetchBulletSim(object):
             self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl,
                                                      force=10)
 
-        for i in range(self.n_substeps):
-            self.bullet_client.stepSimulation()
-            if rendering:
-                time.sleep(time_step)
-        # self.bullet_client.stepSimulation()
+        self.bullet_client.stepSimulation()
+        if rendering:
+            time.sleep(time_step)
+
+        c = self.bullet_client.getBasePositionAndOrientation(self.cubeId)[0]
+        if c[1] < 0.034:
+            c = list(c)
+            c[1] = 0.034
+            orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
+            self.bullet_client.resetBasePositionAndOrientation(self.cubeId, c, orn)
 
         return self._get_obs()
 

@@ -25,10 +25,11 @@ assets_path = "Bullet-HRL/assets/"
 
 class FetchBulletEnv(gym.GoalEnv):
 
-    def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.03, 0.03, 0.03]), assets_path=assets_path):
+    def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.03, 0.03, 0.03]), assets_path=assets_path, n_substeps=5):
         self.time_step = time_step
         self.render_mode = render_mode
         self.thresholds = thresholds
+        self.n_substeps = n_substeps
 
         self.seed(seed)
 
@@ -75,11 +76,12 @@ class FetchBulletEnv(gym.GoalEnv):
     def step(self, action):
         action = np.clip(action, self.action_space.low, self.action_space.high)
 
-        if self.render_mode == 'GUI':
-            obs = self.sim.step(action, rendering=True, time_step=self.time_step)
-            time.sleep(self.time_step)
-        else:
-            obs = self.sim.step(action)
+        for i in range(self.n_substeps):
+            if self.render_mode == 'GUI':
+                obs = self.sim.step(action, rendering=True, time_step=self.time_step)
+                time.sleep(self.time_step)
+            else:
+                obs = self.sim.step(action)
 
         done = False
         info = {

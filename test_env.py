@@ -1,25 +1,19 @@
 import numpy as np
 from gym.wrappers import TimeLimit
-
+import time
 from FetchBulletEnv import FetchBulletEnv, goal_distance
 
-fps = 120
+fps = 240
 time_step = 1. / fps
 
 env = FetchBulletEnv(render_mode='GUI', time_step=time_step, assets_path='assets')
 env = TimeLimit(env, max_episode_steps=50)
 env.reset()
 
+a = np.array([1, 0., 0., -0.0])
 for i in range(100000):
-    obs, reward, done, info = env.step(action=np.array([0., 0., 0., -0.04]))
+    obs, reward, done, info = env.step(action=a)
 
-    a = [0., 0., 0., 0.01]
-    p = env.sim.bullet_client.getJointState(env.sim.panda, 10)[0]
-    p = [0., 0., 0., p]
-    b = goal_distance(p, a, np.array([0.03, 0.03, 0.03, 0.01]))
-    print(b)
-
-
-    # if done:
-    #     print('done, resetting')
-    #     env.reset()
+    if done:
+        print('done, resetting')
+        env.reset()
