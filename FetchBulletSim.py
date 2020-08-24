@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import time
 
 pandaEndEffectorIndex = 11 #8
 pandaNumDofs = 7
@@ -19,11 +20,12 @@ rp = jointPositions
 
 
 class FetchBulletSim(object):
-    def __init__(self, bullet_client, offset, np_random):
+    def __init__(self, bullet_client, offset, np_random, n_substeps=20):
         self.bullet_client = bullet_client
         self.bullet_client.setPhysicsEngineParameter(solverResidualThreshold=0)
         self.offset = np.array(offset)
         self.np_random = np_random
+        self.n_substeps = n_substeps
 
         # print("offset=",offset)
         flags = self.bullet_client.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
@@ -126,7 +128,7 @@ class FetchBulletSim(object):
 
         return self._get_obs()
 
-    def step(self, action, n_substeps=1):
+    def step(self, action, rendering=False, time_step=1./30.):
         assert action.shape == (4,)
         action = action.copy()
         pos_ctrl, gripper_ctrl = action[:3], action[3]
@@ -154,8 +156,11 @@ class FetchBulletSim(object):
             self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl,
                                                      force=10)
 
-        for i in range(n_substeps):
+        for i in range(self.n_substeps):
             self.bullet_client.stepSimulation()
+            if rendering:
+                time.sleep(time_step)
+        # self.bullet_client.stepSimulation()
 
         return self._get_obs()
 
