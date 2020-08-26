@@ -127,23 +127,16 @@ class FetchBulletSim(object):
 
         return self._get_obs()
 
-    def step(self, action, rendering=False, time_step=1./240.):
-        assert action.shape == (4,)
-        action = action.copy()
-        pos_ctrl, gripper_ctrl = action[:3], action[3]
+    def step(self, target, rendering=False, time_step=1./240.):
+        assert target.shape == (4,)
+        target = target.copy()
+        pos_ctrl, gripper_ctrl = target[:3], target[3]
 
-        current_gripper_state = self.get_gripper_state()
-        gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.01, 0.04)
-
-        pos_ctrl *= 0.2  # limit maximum change in position
         rot_ctrl = self.bullet_client.getQuaternionFromEuler(
             [math.pi / 2., 0., 0.])  # fixed rotation of the end effector, expressed as a quaternion
 
-        current_gripper_pos = self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
-        target_gripper_pos = current_gripper_pos + pos_ctrl
-
         jointPoses = self.bullet_client.calculateInverseKinematics(self.panda, pandaEndEffectorIndex,
-                                                                   target_gripper_pos, rot_ctrl, ll, ul, jr, rp,
+                                                                   pos_ctrl, rot_ctrl, ll, ul, jr, rp,
                                                                    maxNumIterations=20)
 
         for i in range(pandaNumDofs):
