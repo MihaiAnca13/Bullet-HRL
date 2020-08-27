@@ -9,7 +9,7 @@ from gym.utils import seeding
 import FetchBulletSim as panda_sim
 
 # video requires ffmpeg available in path
-createVideo = False
+createVideo = True
 fps = 240.
 timeStep = 1. / fps
 
@@ -36,8 +36,9 @@ panda.control_dt = timeStep
 for i in range(100000):
     # panda.bullet_client.submitProfileTiming("full_step")
 
-    panda.step(action=np.array([0., 0., 0., 0.01]))
-    print(panda.get_gripper_pos())
+    panda.step(target=np.array([-0.1014052646308704954, 0.22013282199293425, -0.4641104737542781, 0.01]))
+    # panda.bullet_client.stepSimulation()
+    # print(panda.get_gripper_pos())
 
     if createVideo:
         p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING, 1)

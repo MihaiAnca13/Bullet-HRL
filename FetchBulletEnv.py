@@ -4,7 +4,6 @@ import time
 import gym
 import numpy as np
 import pybullet as p
-import pybullet_data as pd
 from gym import spaces
 from gym.utils import seeding
 from pybullet_utils import bullet_client as bc
@@ -80,8 +79,10 @@ class FetchBulletEnv(gym.GoalEnv):
             if self.render_mode == 'GUI':
                 obs = self.sim.step(action, rendering=True, time_step=self.time_step)
                 time.sleep(self.time_step)
-            else:
+            elif self.render_mode == 'DIRECT':
                 obs = self.sim.step(action)
+            else:
+                obs = None
 
         done = False
         info = {
