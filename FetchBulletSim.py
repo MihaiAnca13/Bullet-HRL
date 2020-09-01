@@ -15,7 +15,8 @@ ul = [7]*pandaNumDofs
 #joint ranges for null space (todo: set them to proper range)
 jr = [7]*pandaNumDofs
 #restposes for null space
-jointPositions = [1.076, 0.060, 0.506, -2.020, -0.034, 2.076, 2.384, 0.03, 0.03]
+# jointPositions = [1.076, 0.060, 0.506, -2.020, -0.034, 2.076, 2.384, 0.04, 0.04]
+jointPositions = [1.238, 0.505, 0.383, -2.003, -0.289, 2.456, 2.589, 0.04, 0.04]
 rp = jointPositions
 
 
@@ -97,16 +98,17 @@ class FetchBulletSim(object):
         self.reset()
 
     def _sample_goal(self):
-        self.goal_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
+        self.goal_pos = self.np_random.uniform([-0.08, 0.03499, -0.66], [0.048, 0.0349, -0.55])
         orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
 
-        if self.np_random.random() < 0.5:
-            self.goal_pos[1] += 0.2  # height offset
+        if self.np_random.random() < 1:
+            self.goal_pos[1] += self.np_random.uniform(0.14, 0.19)  # height offset
 
         self.bullet_client.resetBasePositionAndOrientation(self.targetId, self.goal_pos, orn)
 
     def _randomize_obj_start(self):
-        object_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
+        # object_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
+        object_pos = self.np_random.uniform([-0.07, 0.03499, -0.65], [0.047, 0.0349, -0.56])
         orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
         self.bullet_client.resetBasePositionAndOrientation(self.cubeId, object_pos, orn)
 
