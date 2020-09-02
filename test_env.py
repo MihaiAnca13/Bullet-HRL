@@ -3,7 +3,7 @@ from gym.wrappers import TimeLimit
 import time
 from FetchBulletEnv import FetchBulletEnv, goal_distance
 
-fps = 60
+fps = 240.
 time_step = 1. / fps
 
 env = FetchBulletEnv(render_mode='GUI', time_step=time_step, assets_path='assets')
