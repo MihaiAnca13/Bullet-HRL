@@ -141,14 +141,14 @@ class FetchBulletSim(object):
                                                                    pos_ctrl, rot_ctrl, ll, ul, jr, rp,
                                                                    maxNumIterations=20)
 
-        for i in range(pandaNumDofs):
-            self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, jointPoses[i],
-                                                     force=5 * 240.)
-
         # target for fingers
         for i in [9, 10]:
             self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl,
-                                                     force=10)
+                                                     force= 100.)
+
+        for i in range(pandaNumDofs):
+            self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, jointPoses[i],
+                                                     force=5 * 240.)
 
         self.bullet_client.stepSimulation()
         if rendering:
