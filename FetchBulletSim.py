@@ -134,9 +134,9 @@ class FetchBulletSim(object):
         pos_ctrl, gripper_ctrl = action[:3], action[3]
 
         current_gripper_state = self.get_gripper_state()
-        gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.01, 0.04)
+        gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.0, 0.05)
 
-        pos_ctrl *= 0.2  # limit maximum change in position
+        pos_ctrl *= 0.1  # limit maximum change in position
         rot_ctrl = self.fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
 
         current_gripper_pos = self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
