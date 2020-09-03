@@ -17,4 +17,5 @@ for i in range(100000):
     print(env.sim.get_gripper_state())
     if done:
         print('done, resetting')
+        a = np.random.uniform([-0.08, 0.03499, -0.66, 0.], [0.048, 0.2, -0.55, 0.0001])
         env.reset()

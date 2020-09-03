@@ -76,11 +76,11 @@ class FetchBulletEnv(gym.GoalEnv):
         action = np.clip(action, self.action_space.low, self.action_space.high)
 
         for i in range(self.n_substeps):
-            if self.render_mode == 'GUI':
+            if self.render_mode == 'DIRECT':
+                obs = self.sim.step(action)
+            elif self.render_mode == 'GUI':
                 obs = self.sim.step(action, rendering=True, time_step=self.time_step)
                 time.sleep(self.time_step)
-            elif self.render_mode == 'DIRECT':
-                obs = self.sim.step(action)
             else:
                 obs = None
 

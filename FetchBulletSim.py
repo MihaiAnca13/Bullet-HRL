@@ -94,12 +94,13 @@ class FetchBulletSim(object):
         self.secondary_state = self.bullet_client.saveState()
 
         self.goal_pos = None
+        self.fixed_orn = box_orientation
 
         self.reset()
 
     def _sample_goal(self):
         self.goal_pos = self.np_random.uniform([-0.08, 0.03499, -0.66], [0.048, 0.0349, -0.55])
-        orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
+        orn = self.fixed_orn
 
         if self.np_random.random() < 1:
             self.goal_pos[1] += self.np_random.uniform(0.14, 0.19)  # height offset
@@ -109,7 +110,7 @@ class FetchBulletSim(object):
     def _randomize_obj_start(self):
         # object_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
         object_pos = self.np_random.uniform([-0.07, 0.03499, -0.65], [0.047, 0.0349, -0.56])
-        orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
+        orn = self.fixed_orn
         self.bullet_client.resetBasePositionAndOrientation(self.cubeId, object_pos, orn)
 
         # (0.14620011083425424, 0.034989999999999744, -0.4577289226704112)
@@ -134,8 +135,7 @@ class FetchBulletSim(object):
         target = target.copy()
         pos_ctrl, gripper_ctrl = target[:3], target[3]
 
-        rot_ctrl = self.bullet_client.getQuaternionFromEuler(
-            [math.pi / 2., 0., 0.])  # fixed rotation of the end effector, expressed as a quaternion
+        rot_ctrl = self.fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
 
         jointPoses = self.bullet_client.calculateInverseKinematics(self.panda, pandaEndEffectorIndex,
                                                                    pos_ctrl, rot_ctrl, ll, ul, jr, rp,
@@ -158,8 +158,7 @@ class FetchBulletSim(object):
         if c[1] < 0.034:
             c = list(c)
             c[1] = 0.034
-            orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
-            self.bullet_client.resetBasePositionAndOrientation(self.cubeId, c, orn)
+            self.bullet_client.resetBasePositionAndOrientation(self.cubeId, c, self.fixed_orn)
 
         return self._get_obs()
 
