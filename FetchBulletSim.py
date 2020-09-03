@@ -93,12 +93,13 @@ class FetchBulletSim(object):
         self.secondary_state = self.bullet_client.saveState()
 
         self.goal_pos = None
+        self.fixed_orn = box_orientation
 
         self.reset()
 
     def _sample_goal(self):
         self.goal_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
-        orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
+        orn = self.fixed_orn
 
         if self.np_random.random() < 0.5:
             self.goal_pos[1] += 0.2  # height offset
@@ -107,7 +108,7 @@ class FetchBulletSim(object):
 
     def _randomize_obj_start(self):
         object_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
-        orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
+        orn = self.fixed_orn
         self.bullet_client.resetBasePositionAndOrientation(self.cubeId, object_pos, orn)
 
         # (0.14620011083425424, 0.034989999999999744, -0.4577289226704112)
@@ -136,8 +137,7 @@ class FetchBulletSim(object):
         gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.01, 0.04)
 
         pos_ctrl *= 0.2  # limit maximum change in position
-        rot_ctrl = self.bullet_client.getQuaternionFromEuler(
-            [math.pi / 2., 0., 0.])  # fixed rotation of the end effector, expressed as a quaternion
+        rot_ctrl = self.fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
 
         current_gripper_pos = self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
         target_gripper_pos = current_gripper_pos + pos_ctrl
@@ -146,14 +146,14 @@ class FetchBulletSim(object):
                                                                    target_gripper_pos, rot_ctrl, ll, ul, jr, rp,
                                                                    maxNumIterations=20)
 
-        for i in range(pandaNumDofs):
-            self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, jointPoses[i],
-                                                     force=5 * 240.)
-
         # target for fingers
         for i in [9, 10]:
             self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl,
-                                                     force=10)
+                                                     force= 100.)
+
+        for i in range(pandaNumDofs):
+            self.bullet_client.setJointMotorControl2(self.panda, i, self.bullet_client.POSITION_CONTROL, jointPoses[i],
+                                                     force=5 * 240.)
 
         self.bullet_client.stepSimulation()
         if rendering:
@@ -163,8 +163,7 @@ class FetchBulletSim(object):
         if c[1] < 0.034:
             c = list(c)
             c[1] = 0.034
-            orn = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
-            self.bullet_client.resetBasePositionAndOrientation(self.cubeId, c, orn)
+            self.bullet_client.resetBasePositionAndOrientation(self.cubeId, c, self.fixed_orn)
 
         return self._get_obs()
 
