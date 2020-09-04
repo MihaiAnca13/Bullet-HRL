@@ -79,7 +79,7 @@ class FetchBulletEnv(gym.GoalEnv):
             if self.render_mode == 'DIRECT':
                 obs = self.sim.step(action)
             elif self.render_mode == 'GUI':
-                obs = self.sim.step(action, rendering=True, time_step=self.time_step)
+                obs, gif_frame = self.sim.step(action, rendering=True, time_step=self.time_step)
                 time.sleep(self.time_step)
             else:
                 obs = None
@@ -89,6 +89,9 @@ class FetchBulletEnv(gym.GoalEnv):
             'is_success': self._is_success(obs['achieved_goal'], self.goal),
         }
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
+
+        if self.render_mode == 'GUI':
+            info['gif_frame'] = gif_frame
 
         return obs, reward, done, info
 

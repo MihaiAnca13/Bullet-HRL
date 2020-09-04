@@ -2,6 +2,7 @@ import math
 
 import numpy as np
 import time
+import pybullet as p
 
 pandaEndEffectorIndex = 11 #8
 pandaNumDofs = 7
@@ -159,7 +160,11 @@ class FetchBulletSim(object):
 
         self.bullet_client.stepSimulation()
         if rendering:
-            time.sleep(time_step)
+            start_t = time.time()
+            w, h, rgbPixels, depthPixels, segmentationMaskBuffer = self.bullet_client.getCameraImage(int(RENDER_WIDTH/4), int(RENDER_HEIGHT/4), renderer=p.ER_BULLET_HARDWARE_OPENGL)
+            sleep_time = time_step - (time.time() - start_t) # sleep time - time passed
+            if sleep_time > 0:
+                time.sleep(sleep_time)
 
         c = self.bullet_client.getBasePositionAndOrientation(self.cubeId)[0]
         if c[1] < 0.034:
@@ -167,7 +172,10 @@ class FetchBulletSim(object):
             c[1] = 0.034
             self.bullet_client.resetBasePositionAndOrientation(self.cubeId, c, self.fixed_orn)
 
-        return self._get_obs()
+        if not rendering:
+            return self._get_obs()
+        else:
+            return self._get_obs(), rgbPixels[:,:,:-1] # extracting 3 channels of of 4
 
     def _get_obs(self):
         gripper_pos, gripper_velp, gripper_velr = np.take(
