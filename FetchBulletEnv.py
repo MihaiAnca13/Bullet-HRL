@@ -24,11 +24,12 @@ assets_path = "Bullet-HRL/assets/"
 
 class FetchBulletEnv(gym.GoalEnv):
 
-    def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.03, 0.03, 0.03]), assets_path=assets_path, n_substeps=5):
+    def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.03, 0.03, 0.03]), assets_path=assets_path, n_substeps=5, return_image=False):
         self.time_step = time_step
         self.render_mode = render_mode
         self.thresholds = thresholds
         self.n_substeps = n_substeps
+        self.return_image = return_image
 
         self.seed(seed)
 
@@ -75,14 +76,14 @@ class FetchBulletEnv(gym.GoalEnv):
     def step(self, action):
         action = np.clip(action, self.action_space.low, self.action_space.high)
 
+        rendering = self.render_mode == 'GUI'
+
+        gif_frame = None
         for i in range(self.n_substeps):
-            if self.render_mode == 'DIRECT':
-                obs = self.sim.step(action)
-            elif self.render_mode == 'GUI':
-                obs, gif_frame = self.sim.step(action, rendering=True, time_step=self.time_step)
-                time.sleep(self.time_step)
+            if self.return_image and i == self.n_substeps - 1:
+                obs, gif_frame = self.sim.step(action, rendering=rendering, time_step=self.time_step, extract_image=True)
             else:
-                obs = None
+                obs = self.sim.step(action, rendering=rendering, time_step=self.time_step, extract_image=False)
 
         done = False
         info = {
@@ -90,7 +91,7 @@ class FetchBulletEnv(gym.GoalEnv):
         }
         reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
 
-        if self.render_mode == 'GUI':
+        if gif_frame is not None:
             info['gif_frame'] = gif_frame
 
         return obs, reward, done, info

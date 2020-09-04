@@ -1,17 +1,17 @@
 import math
+import time
 
 import numpy as np
-import time
 import pybullet as p
 
-pandaEndEffectorIndex = 11 #8
+pandaEndEffectorIndex = 11  # 8
 pandaNumDofs = 7
 
 RENDER_HEIGHT = 720
 RENDER_WIDTH = 960
 
-ll = [-7]*pandaNumDofs
-#upper limits for null space (todo: set them to proper range)
+ll = [-7] * pandaNumDofs
+# upper limits for null space (todo: set them to proper range)
 ul = [7]*pandaNumDofs
 #joint ranges for null space (todo: set them to proper range)
 jr = [7]*pandaNumDofs
@@ -131,7 +131,7 @@ class FetchBulletSim(object):
 
         return self._get_obs()
 
-    def step(self, action, rendering=False, time_step=1./240.):
+    def step(self, action, rendering=False, time_step=1. / 240., extract_image=False):
         assert action.shape == (4,)
         action = action.copy()
         pos_ctrl, gripper_ctrl = action[:3], action[3]
@@ -160,11 +160,7 @@ class FetchBulletSim(object):
 
         self.bullet_client.stepSimulation()
         if rendering:
-            start_t = time.time()
-            w, h, rgbPixels, depthPixels, segmentationMaskBuffer = self.bullet_client.getCameraImage(int(RENDER_WIDTH/4), int(RENDER_HEIGHT/4), renderer=p.ER_BULLET_HARDWARE_OPENGL)
-            sleep_time = time_step - (time.time() - start_t) # sleep time - time passed
-            if sleep_time > 0:
-                time.sleep(sleep_time)
+            time.sleep(time_step)
 
         c = self.bullet_client.getBasePositionAndOrientation(self.cubeId)[0]
         if c[1] < 0.034:
@@ -172,9 +168,30 @@ class FetchBulletSim(object):
             c[1] = 0.034
             self.bullet_client.resetBasePositionAndOrientation(self.cubeId, c, self.fixed_orn)
 
-        if not rendering:
+        if not extract_image:
             return self._get_obs()
         else:
+            viewMatrix = p.computeViewMatrixFromYawPitchRoll(
+                cameraTargetPosition=[0.35, -0.13, 0],
+                distance=1.2,
+                yaw=38,
+                pitch=-22,
+                roll=0,
+                upAxisIndex=1
+            )
+            projectionMatrix = p.computeProjectionMatrixFOV(
+                fov=120,
+                aspect=RENDER_WIDTH/RENDER_HEIGHT,
+                nearVal=0.01,
+                farVal=1.5
+            )
+            w, h, rgbPixels, depthPixels, segmentationMaskBuffer = self.bullet_client.getCameraImage(
+                width=int(RENDER_WIDTH / 2),
+                height=int(RENDER_HEIGHT / 2),
+                viewMatrix=viewMatrix,
+                projectionMatrix=projectionMatrix,
+                renderer=p.ER_TINY_RENDERER,
+            )
             return self._get_obs(), rgbPixels[:,:,:-1] # extracting 3 channels of of 4
 
     def _get_obs(self):
