@@ -11,8 +11,8 @@
       <geometry>
         <cylinder radius="0.005" length="0.05"/>
       </geometry>
-       <material name="yellow">
-        <color rgba="0.945 0.86 0.356 1"/>
+       <material name="blue">
+        <color rgba="0.1 0.3 0.9 1"/>
       </material>
     </visual>
   </link>
