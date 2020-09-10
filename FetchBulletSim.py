@@ -105,7 +105,7 @@ class FetchBulletSim(object):
         orn = self.fixed_orn
 
         if self.np_random.random() <= 1:
-            self.goal_pos[1] += self.np_random.uniform(0.14, 0.23)  # height offset
+            self.goal_pos[1] += self.np_random.uniform(0.14, 0.19)  # height offset
 
         self.bullet_client.resetBasePositionAndOrientation(self.targetId, self.goal_pos, orn)
 
