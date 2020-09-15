@@ -22,11 +22,13 @@ rp = jointPositions
 
 
 class FetchBulletSim(object):
-    def __init__(self, bullet_client, offset, np_random):
+    def __init__(self, bullet_client, offset, np_random, smoothness_alpha=0.4):
         self.bullet_client = bullet_client
         self.bullet_client.setPhysicsEngineParameter(solverResidualThreshold=0)
         self.offset = np.array(offset)
         self.np_random = np_random
+        self.last_gripper_pos = np.zeros(3)
+        self.smoothness_alpha = smoothness_alpha
 
         # print("offset=",offset)
         flags = self.bullet_client.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
@@ -129,6 +131,8 @@ class FetchBulletSim(object):
 
         self.bullet_client.stepSimulation()
 
+        self.last_gripper_pos = np.array(self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0])
+
         return self._get_obs()
 
     def step(self, action, rendering=False, time_step=1. / 240., extract_image=False):
@@ -142,8 +146,11 @@ class FetchBulletSim(object):
         pos_ctrl *= 0.1  # limit maximum change in position
         rot_ctrl = self.fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
 
-        current_gripper_pos = self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
-        target_gripper_pos = current_gripper_pos + pos_ctrl
+        current_gripper_pos = np.array(self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0])
+        target_gripper_pos = np.array(current_gripper_pos + pos_ctrl)
+
+        target_gripper_pos = self.smoothness_alpha * target_gripper_pos + (1 - self.smoothness_alpha) * self.last_gripper_pos
+        self.last_gripper_pos = current_gripper_pos.copy()
 
         jointPoses = self.bullet_client.calculateInverseKinematics(self.panda, pandaEndEffectorIndex,
                                                                    target_gripper_pos, rot_ctrl, ll, ul, jr, rp,
