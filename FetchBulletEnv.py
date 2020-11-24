@@ -92,11 +92,17 @@ class FetchBulletEnv(gym.GoalEnv):
 
         return obs, reward, done, info
 
-    def _is_success(self, achieved_goal, desired_goal):
-        return goal_distance(achieved_goal, desired_goal, self.thresholds)
+    def _is_success(self, achieved_goal, desired_goal, thresholds=None):
+        if thresholds is None:
+            thresholds = self.thresholds
+        return goal_distance(achieved_goal, desired_goal, thresholds)
 
     def compute_reward(self, achieved_goal, desired_goal, info):
-        return int(self._is_success(achieved_goal, desired_goal)) - 1
+        if info is not None and 'thresholds' in info:
+            thresholds = info['thresholds']
+        else:
+            thresholds = self.thresholds
+        return int(self._is_success(achieved_goal, desired_goal, thresholds)) - 1
 
     def update_markers(self, target):
         assert len(target) == 4
