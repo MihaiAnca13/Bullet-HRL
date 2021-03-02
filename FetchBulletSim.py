@@ -33,7 +33,10 @@ class FetchBulletSim(object):
         self.bullet_client.loadURDF("tray/traybox.urdf", [0 + offset[0], 0 + offset[1], -0.6 + offset[2]],
                                     [-0.5, -0.5, -0.5, 0.5], flags=flags)
 
-        self.cubeId = self.bullet_client.loadURDF("cube.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
+        self.cubeId = self.bullet_client.loadURDF("cube_red.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
+                                                  flags=flags)
+
+        self.cubeId = self.bullet_client.loadURDF("cube_blue.urdf", np.array([0.1, 0.3, -0.7]) + self.offset,
                                                   flags=flags)
 
         # self.markerId = self.bullet_client.loadURDF("assets/marker.urdf", np.array([0.1, 0.2, -0.55]) + self.offset,
@@ -49,6 +52,11 @@ class FetchBulletSim(object):
                                                             np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
 
         # Loading the robotic arm
+        orn = [-0.707107, 0.0, 0.0, 0.707107]  # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
+        # eul = self.bullet_client.getEulerFromQuaternion([-0.5, -0.5, -0.5, 0.5])
+        self.panda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, -1.2]) + self.offset, orn,
+                                                 useFixedBase=True, flags=flags)
+
         orn = [-0.707107, 0.0, 0.0, 0.707107]  # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
         # eul = self.bullet_client.getEulerFromQuaternion([-0.5, -0.5, -0.5, 0.5])
         self.panda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, 0]) + self.offset, orn,
