@@ -22,7 +22,7 @@ p.configureDebugVisualizer(p.COV_ENABLE_Y_AXIS_UP,1)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
 p.setPhysicsEngineParameter(maxNumCmdPer1ms=1000)
 p.resetDebugVisualizerCamera(cameraDistance=1.3, cameraYaw=38, cameraPitch=-22, cameraTargetPosition=[0.35,-0.13,0])
-p.setAdditionalSearchPath('assets')
+p.setAdditionalSearchPath('/home/mihai/PycharmProjects/HER-lightning/Bullet-HRL/assets/')
 
 p.setTimeStep(timeStep)
 p.setGravity(0,-9.8,0)
@@ -36,7 +36,7 @@ panda.control_dt = timeStep
 for i in range(100000):
     # panda.bullet_client.submitProfileTiming("full_step")
 
-    panda.step(target=np.array([-0.1014052646308704954, 0.22013282199293425, -0.4641104737542781, 0.01]), rendering=True, time_step=timeStep)
+    panda.step(np.array([0.0, -0.2, 0.0, 0.01]), rendering=True, time_step=timeStep)
     # panda.bullet_client.stepSimulation()
     # print(panda.get_gripper_pos())
 
