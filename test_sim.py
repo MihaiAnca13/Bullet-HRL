@@ -21,7 +21,7 @@ else:
 p.configureDebugVisualizer(p.COV_ENABLE_Y_AXIS_UP,1)
 p.configureDebugVisualizer(p.COV_ENABLE_GUI,0)
 p.setPhysicsEngineParameter(maxNumCmdPer1ms=1000)
-p.resetDebugVisualizerCamera(cameraDistance=1.3, cameraYaw=38, cameraPitch=-22, cameraTargetPosition=[0.35,-0.13,0])
+p.resetDebugVisualizerCamera(cameraDistance=2.0, cameraYaw=38, cameraPitch=-22, cameraTargetPosition=[0.35,-0.13,0])
 p.setAdditionalSearchPath('assets')
 
 p.setTimeStep(timeStep)

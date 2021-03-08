@@ -33,10 +33,10 @@ class FetchBulletSim(object):
         self.bullet_client.loadURDF("tray/traybox.urdf", [0 + offset[0], 0 + offset[1], -0.6 + offset[2]],
                                     [-0.5, -0.5, -0.5, 0.5], flags=flags)
 
-        self.cubeId = self.bullet_client.loadURDF("cube_red.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
+        self.RedcubeId = self.bullet_client.loadURDF("cube_red.urdf", np.array([0.1, 0.3, -0.9]) + self.offset,
                                                   flags=flags)
 
-        self.cubeId = self.bullet_client.loadURDF("cube_blue.urdf", np.array([0.1, 0.3, -0.7]) + self.offset,
+        self.BluecubeId = self.bullet_client.loadURDF("cube_blue.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
                                                   flags=flags)
 
         # self.markerId = self.bullet_client.loadURDF("assets/marker.urdf", np.array([0.1, 0.2, -0.55]) + self.offset,
@@ -97,7 +97,7 @@ class FetchBulletSim(object):
         # generate and save pose with object grasped
         gripper_pos = self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex)[0]
         box_orientation = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
-        self.bullet_client.resetBasePositionAndOrientation(self.cubeId, gripper_pos, box_orientation)
+        self.bullet_client.resetBasePositionAndOrientation(self.BluecubeId, gripper_pos, box_orientation)
         self.secondary_state = self.bullet_client.saveState()
 
         self.goal_pos = None
@@ -116,7 +116,7 @@ class FetchBulletSim(object):
 
     def _randomize_obj_start(self):
         object_pos = self.np_random.uniform([-0.136, 0.03499, -0.718], [0.146, 0.0349, -0.457])
-        self.bullet_client.resetBasePositionAndOrientation(self.cubeId, object_pos, self.fixed_orn)
+        self.bullet_client.resetBasePositionAndOrientation(self.BluecubeId, object_pos, self.fixed_orn)
 
         # (0.14620011083425424, 0.034989999999999744, -0.4577289226704112)
         # (-0.13639202772104536, 0.03498999999999295, -0.7185703988375852)
@@ -166,11 +166,11 @@ class FetchBulletSim(object):
         if rendering:
             time.sleep(time_step)
 
-        c = self.bullet_client.getBasePositionAndOrientation(self.cubeId)[0]
+        c = self.bullet_client.getBasePositionAndOrientation(self.BluecubeId)[0]
         if c[1] < 0.034:
             c = list(c)
             c[1] = 0.034
-            self.bullet_client.resetBasePositionAndOrientation(self.cubeId, c, self.fixed_orn)
+            self.bullet_client.resetBasePositionAndOrientation(self.BluecubeId, c, self.fixed_orn)
 
         return self._get_obs()
 
@@ -179,8 +179,8 @@ class FetchBulletSim(object):
             self.bullet_client.getLinkState(self.panda, pandaEndEffectorIndex, computeLinkVelocity=True), [0, 6, 7])
         gripper_state = self.get_gripper_state()
 
-        obj_pos = self.bullet_client.getBasePositionAndOrientation(self.cubeId)[0]
-        obj_velp, obj_velr = self.bullet_client.getBaseVelocity(self.cubeId)
+        obj_pos = self.bullet_client.getBasePositionAndOrientation(self.BluecubeId)[0]
+        obj_velp, obj_velr = self.bullet_client.getBaseVelocity(self.BluecubeId)
 
         obj_rel_pos = np.array(obj_pos) - np.array(gripper_pos)
 
@@ -218,6 +218,6 @@ class FetchBulletSim(object):
         # self.bullet_client.addUserDebugLine(f, t, [1, 1, 1])
         body_link_ids = self.bullet_client.getOverlappingObjects(aabbMin, aabbMax)
         body_ids = [x[0] for x in body_link_ids]
-        if self.cubeId in body_ids:
+        if self.BluecubeId in body_ids:
             return True
         return False
