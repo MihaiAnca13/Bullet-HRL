@@ -54,12 +54,12 @@ class FetchBulletSim(object):
         # Loading the robotic arm
         orn = [-0.707107, 0.0, 0.0, 0.707107]  # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
         # eul = self.bullet_client.getEulerFromQuaternion([-0.5, -0.5, -0.5, 0.5])
-        self.panda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, -1.2]) + self.offset, orn,
+        self.panda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, -1.4]) + self.offset, orn,
                                                  useFixedBase=True, flags=flags)
 
         orn = [-0.707107, 0.0, 0.0, 0.707107]  # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
         # eul = self.bullet_client.getEulerFromQuaternion([-0.5, -0.5, -0.5, 0.5])
-        self.panda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, 0]) + self.offset, orn,
+        self.panda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, 0.2]) + self.offset, orn,
                                                  useFixedBase=True, flags=flags)
 
         # self.control_dt = 1. / 240.
