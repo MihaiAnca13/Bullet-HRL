@@ -28,15 +28,15 @@ p.setTimeStep(timeStep)
 p.setGravity(0,-9.8,0)
 
 np_random, seed = seeding.np_random(1)
-panda = panda_sim.FetchBulletSim(p,[0,0,0], np_random=np_random)
-panda.control_dt = timeStep
+sim = panda_sim.FetchBulletSim(p, [0, 0, 0], np_random=np_random)
+sim.control_dt = timeStep
 
 # logId = panda.bullet_client.startStateLogging(panda.bullet_client.STATE_LOGGING_PROFILE_TIMINGS, "log.json")
 # panda.bullet_client.submitProfileTiming("start")
 for i in range(100000):
     # panda.bullet_client.submitProfileTiming("full_step")
 
-    panda.step(np.array([-0.1014052646308704954, 0.22013282199293425, -0.4641104737542781, 0.01]), rendering=True, time_step=timeStep)
+    sim.step(np.array([-0.1014052646308704954, 0.22013282199293425, -0.4641104737542781, 0.01]), rendering=True, time_step=timeStep)
     # panda.bullet_client.stepSimulation()
     # print(panda.get_gripper_pos())
 
