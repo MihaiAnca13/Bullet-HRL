@@ -152,7 +152,7 @@ class FetchBulletSim(object):
 
         return self._get_obs()
 
-    def step(self, action, rendering=False, time_step=1./240.):
+    def BlueStep(self, action, rendering=False, time_step=1. / 240.):
         assert action.shape == (4,)
         action = action.copy()
         pos_ctrl, gripper_ctrl = action[:3], action[3]
@@ -236,5 +236,71 @@ class FetchBulletSim(object):
         body_link_ids = self.bullet_client.getOverlappingObjects(aabbMin, aabbMax)
         body_ids = [x[0] for x in body_link_ids]
         if self.BluecubeId in body_ids:
+            return True
+        return False
+
+    def RedStep(self, action, rendering=False, time_step=1. / 240.):
+        assert action.shape == (4,)
+        action = action.copy()
+        pos_ctrl, gripper_ctrl = action[:3], action[3]
+
+        current_gripper_state = self.get_red_gripper_state()
+        gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.0, 0.05)
+
+        pos_ctrl *= 0.1  # limit maximum change in position
+        rot_ctrl = self.fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
+
+        current_gripper_pos = self.bullet_client.getLinkState(self.Redpanda, pandaEndEffectorIndex)[0]
+        target_gripper_pos = current_gripper_pos + pos_ctrl
+
+        jointPoses = self.bullet_client.calculateInverseKinematics(self.Redpanda, pandaEndEffectorIndex,
+                                                                   target_gripper_pos, rot_ctrl, ll, ul, jr, rp,
+                                                                   maxNumIterations=20)
+
+        # target for fingers
+        for i in [9, 10]:
+            self.bullet_client.setJointMotorControl2(self.Redpanda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl,
+                                                     force= 100.)
+
+        for i in range(pandaNumDofs):
+            self.bullet_client.setJointMotorControl2(self.Redpanda, i, self.bullet_client.POSITION_CONTROL, jointPoses[i],
+                                                     force=5 * 240.)
+
+        self.bullet_client.stepSimulation()
+        if rendering:
+            time.sleep(time_step)
+
+        c = self.bullet_client.getBasePositionAndOrientation(self.RedcubeId)[0]
+        if c[1] < 0.034:
+            c = list(c)
+            c[1] = 0.034
+            self.bullet_client.resetBasePositionAndOrientation(self.RedcubeId, c, self.fixed_orn)
+
+        return self._get_obs()
+
+    def get_red_gripper_pos(self):
+        return self.bullet_client.getLinkState(self.Redpanda, pandaEndEffectorIndex)[0]
+
+    def get_red_gripper_state(self):
+        return self.bullet_client.getJointState(self.Redpanda, 9)[0]
+
+    def move_red_finger_markers(self, target_pos):
+        target_pos1, target_pos2 = target_pos
+        orn = self.bullet_client.getQuaternionFromEuler([0., 0., 0.])
+        self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, target_pos1, orn)
+        self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, target_pos2, orn)
+
+    def red_close(self):
+        del self.bullet_client
+
+    def detect_red_gripper_collision(self):
+        aabbMin, aabbMax = self.bullet_client.getAABB(self.Redpanda, 9)
+        # drawing collision line?
+        # f = [aabbMax[0], aabbMin[1], aabbMin[2]]
+        # t = [aabbMax[0], aabbMax[1], aabbMin[2]]
+        # self.bullet_client.addUserDebugLine(f, t, [1, 1, 1])
+        body_link_ids = self.bullet_client.getOverlappingObjects(aabbMin, aabbMax)
+        body_ids = [x[0] for x in body_link_ids]
+        if self.RedcubeId in body_ids:
             return True
         return False

@@ -77,9 +77,9 @@ class FetchBulletEnv(gym.GoalEnv):
 
         for i in range(self.n_substeps):
             if self.render_mode == 'DIRECT':
-                obs = self.sim.step(action)
+                obs = self.sim.BlueStep(action)
             elif self.render_mode == 'GUI':
-                obs = self.sim.step(action, rendering=True, time_step=self.time_step)
+                obs = self.sim.BlueStep(action, rendering=True, time_step=self.time_step)
                 time.sleep(self.time_step)
             else:
                 obs = None
