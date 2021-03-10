@@ -1,4 +1,5 @@
 import time
+import math
 
 import numpy as np
 import pybullet as p
@@ -36,8 +37,8 @@ sim.control_dt = timeStep
 for i in range(100000):
     # panda.bullet_client.submitProfileTiming("full_step")
 
-    sim.BlueStep(np.array([-0.1014052646308704954, 0.22013282199293425, -0.4641104737542781, 0.01]), rendering=True, time_step=timeStep)
-    #sim.RedStep(np.array([0.1014052646308704954, -0.22013282199293425, 0.4641104737542781, 0.01]), rendering=True, time_step=timeStep)
+    sim.BlueStep(np.array([0.1, 0.0, -0.7, 0.01]), rendering=True, time_step=timeStep)
+    #sim.RedStep(np.array([0.0, 0.0, 0.5, 0.01]), rendering=True, time_step=timeStep)
     # panda.bullet_client.stepSimulation()
     # print(panda.get_gripper_pos())
 
