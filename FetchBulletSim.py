@@ -17,6 +17,7 @@ jr = [7]*pandaNumDofs
 #restposes for null space
 jointPositions = [1.076, 0.060, 0.506, -2.020, -0.034, 2.076, 2.384, 0.03, 0.03]
 rp = jointPositions
+RedJointPositions = [1.076, 0.060, 0.506, -2.020, -0.034, 2.076, 2.384, 0.03, 0.03]
 
 
 class FetchBulletSim(object):
@@ -78,7 +79,7 @@ class FetchBulletSim(object):
         self.bullet_client.changeConstraint(c, gearRatio=-1, erp=0.1, maxForce=50)
 
         index = 0
-        # save normal initial state
+        # save normal initial state for Bluepanda
         for j in range(self.bullet_client.getNumJoints(self.Bluepanda)):
             self.bullet_client.changeDynamics(self.Bluepanda, j, linearDamping=0, angularDamping=0)
             info = self.bullet_client.getJointInfo(self.Bluepanda, j)
@@ -93,6 +94,21 @@ class FetchBulletSim(object):
                 index = index + 1
 
         self.initial_state = self.bullet_client.saveState()
+
+        index = 0
+        # save normal initial state for Redpanda
+        for j in range(self.bullet_client.getNumJoints(self.Redpanda)):
+            self.bullet_client.changeDynamics(self.Redpanda, j, linearDamping=0, angularDamping=0)
+            info = self.bullet_client.getJointInfo(self.Redpanda, j)
+            jointType = info[2]
+            if (jointType == self.bullet_client.JOINT_PRISMATIC):
+                self.bullet_client.resetJointState(self.Redpanda, j, RedJointPositions[index])
+                index = index + 1
+            if (jointType == self.bullet_client.JOINT_REVOLUTE):
+                self.bullet_client.resetJointState(self.Redpanda, j, RedJointPositions[index])
+                index = index + 1
+
+        self.Red_initial_state = self.bullet_client.saveState()
 
         # generate and save pose with object grasped
         gripper_pos = self.bullet_client.getLinkState(self.Bluepanda, pandaEndEffectorIndex)[0]
