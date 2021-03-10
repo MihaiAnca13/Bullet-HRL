@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+import pybullet as p
 import time
 
 pandaEndEffectorIndex = 11 #8
@@ -53,7 +54,7 @@ class FetchBulletSim(object):
                                                             np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
 
         # Loading the robotic arm
-        orn = [-0.707107, 0.0, 0.0, 0.707107]  # p.getQuaternionFromEuler([-math.pi/2,math.pi/2,0])
+        orn = p.getQuaternionFromEuler([-math.pi/2, math.pi,0])
         # eul = self.bullet_client.getEulerFromQuaternion([-0.5, -0.5, -0.5, 0.5])
         self.Redpanda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, -1.4]) + self.offset, orn,
                                                  useFixedBase=True, flags=flags)
