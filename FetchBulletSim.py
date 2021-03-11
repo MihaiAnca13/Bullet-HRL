@@ -152,7 +152,7 @@ class FetchBulletSim(object):
 
         return self._get_obs()
 
-    def BlueStep(self, action, rendering=False, time_step=1. / 240.):
+    def step(self, action, rendering=False, time_step=1. / 240.):
         assert action.shape == (4,)
         action = action.copy()
         pos_ctrl, gripper_ctrl = action[:3], action[3]
