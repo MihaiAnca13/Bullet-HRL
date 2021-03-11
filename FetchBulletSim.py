@@ -96,6 +96,17 @@ class FetchBulletSim(object):
 
         self.initial_state = self.bullet_client.saveState()
 
+        # create a constraint to keep the fingers centered
+        c = self.bullet_client.createConstraint(self.Redpanda,
+                                                9,
+                                                self.Redpanda,
+                                                10,
+                                                jointType=self.bullet_client.JOINT_GEAR,
+                                                jointAxis=[1, 0, 0],
+                                                parentFramePosition=[0, 0, 0],
+                                                childFramePosition=[0, 0, 0])
+        self.bullet_client.changeConstraint(c, gearRatio=-1, erp=0.1, maxForce=50)
+
         index = 0
         # save normal initial state for Redpanda
         for j in range(self.bullet_client.getNumJoints(self.Redpanda)):
