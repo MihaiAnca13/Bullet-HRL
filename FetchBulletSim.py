@@ -130,6 +130,9 @@ class FetchBulletSim(object):
 
         self.goal_pos = None
         self.fixed_orn = box_orientation
+        orientation1 = self.bullet_client.getQuaternionFromEuler([math.pi / 2., -math.pi/2, 0.])
+        self.red_fixed_orn = orientation1
+        self.blue_fixed_orn = box_orientation
 
         self.reset()
 
@@ -172,7 +175,7 @@ class FetchBulletSim(object):
         gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.0, 0.05)
 
         pos_ctrl *= 0.1  # limit maximum change in position
-        rot_ctrl = self.fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
+        rot_ctrl = self.blue_fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
 
         current_gripper_pos = self.bullet_client.getLinkState(self.Bluepanda, pandaEndEffectorIndex)[0]
         target_gripper_pos = current_gripper_pos + pos_ctrl
@@ -259,7 +262,7 @@ class FetchBulletSim(object):
         gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.0, 0.05)
 
         pos_ctrl *= 0.1  # limit maximum change in position
-        rot_ctrl = self.fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
+        rot_ctrl = self.red_fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
 
         current_gripper_pos = self.bullet_client.getLinkState(self.Redpanda, pandaEndEffectorIndex)[0]
         target_gripper_pos = current_gripper_pos + pos_ctrl
