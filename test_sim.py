@@ -37,10 +37,11 @@ sim.control_dt = timeStep
 for i in range(100000):
     # panda.bullet_client.submitProfileTiming("full_step")
 
-    sim.step(np.array([0., 0.0, 0, 0.01]), rendering=True, time_step=timeStep)
-    sim.RedStep(np.array([0., 0.0, 0.0, 0.01]), rendering=True, time_step=timeStep)
+    sim.step(np.array([0.0, 0.0, 0.0, 0.01]), rendering=True, time_step=timeStep)
+    sim.RedStep(np.array([0.0, 0.0, 0.0, 0.01]), rendering=True, time_step=timeStep)
     # panda.bullet_client.stepSimulation()
-    # print(panda.get_gripper_pos())
+    #print(sim.get_gripper_pos())
+    #print(sim.get_red_gripper_pos())
 
     if createVideo:
         p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING, 1)

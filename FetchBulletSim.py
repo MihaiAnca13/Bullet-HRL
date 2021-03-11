@@ -16,9 +16,9 @@ ul = [7]*pandaNumDofs
 #joint ranges for null space (todo: set them to proper range)
 jr = [7]*pandaNumDofs
 #restposes for null space
-jointPositions = [1.076, 0.060, 0.506, -2.020, -0.034, 2.076, 2.384, 0.03, 0.03]
+jointPositions = [0.997, 0.177, 0.700, -1.935, -0.129, 2.068, 0.966, 0.040, 0.040]
 rp = jointPositions
-RedJointPositions = [1.076, 0.060, 0.506, -2.020, -0.034, 2.076, 2.384, 0.03, 0.03]
+RedJointPositions = [0.997, 0.177, 0.700, -1.935, -0.129, 2.068, 0.966, 0.040, 0.040]
 
 
 class FetchBulletSim(object):
@@ -130,9 +130,10 @@ class FetchBulletSim(object):
 
         self.goal_pos = None
         self.fixed_orn = box_orientation
-        orientation1 = self.bullet_client.getQuaternionFromEuler([math.pi / 2., -math.pi/2, 0.])
-        self.red_fixed_orn = orientation1
-        self.blue_fixed_orn = box_orientation
+        red_orientation = self.bullet_client.getQuaternionFromEuler([math.pi / 2., -math.pi/2, 0.])
+        self.red_fixed_orn = red_orientation
+        blue_orientation = self.bullet_client.getQuaternionFromEuler([math.pi / 2., math.pi / 2, 0.])
+        self.blue_fixed_orn = blue_orientation
 
         self.reset()
 
@@ -183,7 +184,7 @@ class FetchBulletSim(object):
         jointPoses = self.bullet_client.calculateInverseKinematics(self.Bluepanda, pandaEndEffectorIndex,
                                                                    target_gripper_pos, rot_ctrl, ll, ul, jr, rp,
                                                                    maxNumIterations=20)
-
+        #print('Blue:', jointPoses)
         # target for fingers
         for i in [9, 10]:
             self.bullet_client.setJointMotorControl2(self.Bluepanda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl,
@@ -246,7 +247,7 @@ class FetchBulletSim(object):
         # drawing collision line?
         # f = [aabbMax[0], aabbMin[1], aabbMin[2]]
         # t = [aabbMax[0], aabbMax[1], aabbMin[2]]
-        # self.bullet_client.addUserDebugLine(f, t, [1, 1, 1])
+        # self.bullet_clieoxnt.addUserDebugLine(f, t, [1, 1, 1])
         body_link_ids = self.bullet_client.getOverlappingObjects(aabbMin, aabbMax)
         body_ids = [x[0] for x in body_link_ids]
         if self.BluecubeId in body_ids:
@@ -270,7 +271,7 @@ class FetchBulletSim(object):
         jointPoses = self.bullet_client.calculateInverseKinematics(self.Redpanda, pandaEndEffectorIndex,
                                                                    target_gripper_pos, rot_ctrl, ll, ul, jr, rp,
                                                                    maxNumIterations=20)
-
+        #print('Red:', jointPoses)
         # target for fingers
         for i in [9, 10]:
             self.bullet_client.setJointMotorControl2(self.Redpanda, i, self.bullet_client.POSITION_CONTROL, gripper_ctrl,
