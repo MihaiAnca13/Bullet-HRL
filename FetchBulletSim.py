@@ -147,9 +147,10 @@ class FetchBulletSim(object):
         self.bullet_client.resetBasePositionAndOrientation(self.targetId, self.goal_pos, orn)
 
     def _randomize_obj_start(self):
-        object_pos = self.np_random.uniform([-0.136, 0.03499, -0.718], [0.146, 0.0349, -0.457])
+        object_pos = self.np_random.uniform([-0.3, 0.03499, -0.3], [0.3, 0.03499, -0.2])
         self.bullet_client.resetBasePositionAndOrientation(self.BluecubeId, object_pos, self.fixed_orn)
-
+        red_object_pos = self.np_random.uniform([-0.3, 0.03499, -0.7], [0.3, 0.03499, -0.8])
+        self.bullet_client.resetBasePositionAndOrientation(self.RedcubeId, red_object_pos, self.fixed_orn)
         # (0.14620011083425424, 0.034989999999999744, -0.4577289226704112)
         # (-0.13639202772104536, 0.03498999999999295, -0.7185703988375852)
 
