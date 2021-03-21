@@ -92,6 +92,26 @@ class FetchBulletEnv(gym.GoalEnv):
 
         return obs, reward, done, info
 
+    def RedStep(self, action):
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+
+        for i in range(self.n_substeps):
+            if self.render_mode == 'DIRECT':
+                obs = self.sim.step(action)
+            elif self.render_mode == 'GUI':
+                obs = self.sim.step(action, rendering=True, time_step=self.time_step)
+                time.sleep(self.time_step)
+            else:
+                obs = None
+
+        done = False
+        info = {
+            'is_success': self._is_success(obs['achieved_goal'], self.goal),
+        }
+        reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
+
+        return obs, reward, done, info
+
     def _is_success(self, achieved_goal, desired_goal, thresholds=None):
         if thresholds is not None:
             return goal_distance(achieved_goal, desired_goal, thresholds)
