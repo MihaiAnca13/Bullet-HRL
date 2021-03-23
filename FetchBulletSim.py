@@ -138,11 +138,12 @@ class FetchBulletSim(object):
         self.reset()
 
     def _sample_goal(self):
-        self.goal_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
+        #self.goal_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
+        self.goal_pos = [0.0, 0.28, -0.6]
         orn = self.fixed_orn
 
-        if self.np_random.random() <= 1:
-            self.goal_pos[1] += self.np_random.uniform(0.14, 0.23)  # height offset
+        #if self.np_random.random() <= 1:
+            #self.goal_pos[1] += self.np_random.uniform(0.14, 0.23)  # height offset
 
         self.bullet_client.resetBasePositionAndOrientation(self.targetId, self.goal_pos, orn)
 
