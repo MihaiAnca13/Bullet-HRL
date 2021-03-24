@@ -51,7 +51,7 @@ class FetchBulletEnv(gym.GoalEnv):
         self.sim = FetchBulletSim(bullet_instance, [0, 0, 0], self.np_random)
 
         obs = self.sim.reset()
-        self.action_space = spaces.Box(-1., 1., shape=(4,), dtype='float32')
+        self.action_space = spaces.Box(-1., 1., shape=(8,), dtype='float32')
         self.observation_space = spaces.Dict(dict(
             desired_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
             achieved_goal=spaces.Box(-np.inf, np.inf, shape=obs['achieved_goal'].shape, dtype='float32'),
@@ -73,13 +73,19 @@ class FetchBulletEnv(gym.GoalEnv):
         self.sim.close()
 
     def step(self, action):
-        action = np.clip(action, self.action_space.low, self.action_space.high)
+
+        blue_action = np.clip(action[:4], self.action_space.low[:4], self.action_space.high[:4])
+        red_action = np.clip(action[4:], self.action_space.low[4:], self.action_space.high[4:])
+
+        #action = np.clip(action, self.action_space.low, self.action_space.high)
 
         for i in range(self.n_substeps):
             if self.render_mode == 'DIRECT':
-                obs = self.sim.step(action)
+                obs = self.sim.step(blue_action)
+                obs = self.sim.RedStep(red_action)
             elif self.render_mode == 'GUI':
-                obs = self.sim.step(action, rendering=True, time_step=self.time_step)
+                obs = self.sim.step(blue_action, rendering=True, time_step=self.time_step)
+                obs = self.sim.RedStep(red_action, rendering=True, time_step=self.time_step)
                 time.sleep(self.time_step)
             else:
                 obs = None
@@ -92,25 +98,25 @@ class FetchBulletEnv(gym.GoalEnv):
 
         return obs, reward, done, info
 
-    def RedStep(self, action):
-        action = np.clip(action, self.action_space.low, self.action_space.high)
+    #def RedStep(self, action):
+        #action = np.clip(action, self.action_space.low, self.action_space.high)
 
-        for i in range(self.n_substeps):
-            if self.render_mode == 'DIRECT':
-                obs = self.sim.step(action)
-            elif self.render_mode == 'GUI':
-                obs = self.sim.step(action, rendering=True, time_step=self.time_step)
-                time.sleep(self.time_step)
-            else:
-                obs = None
+        #for i in range(self.n_substeps):
+            #if self.render_mode == 'DIRECT':
+                #obs = self.sim.step(action)
+            #elif self.render_mode == 'GUI':
+                #obs = self.sim.step(action, rendering=True, time_step=self.time_step)
+                #time.sleep(self.time_step)
+            #else:
+                #obs = None
 
-        done = False
-        info = {
-            'is_success': self._is_success(obs['achieved_goal'], self.goal),
-        }
-        reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
+        #done = False
+        #info = {
+            #'is_success': self._is_success(obs['achieved_goal'], self.goal),
+        #}
+        #reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
 
-        return obs, reward, done, info
+        #return obs, reward, done, info
 
     def _is_success(self, achieved_goal, desired_goal, thresholds=None):
         if thresholds is not None:
