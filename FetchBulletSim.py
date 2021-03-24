@@ -139,7 +139,7 @@ class FetchBulletSim(object):
 
     def _sample_goal(self):
         #self.goal_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
-        self.goal_pos = [0.0, 0.28, -0.6]
+        self.goal_pos = np.array([0.0, 0.28, -0.6])
         orn = self.fixed_orn
 
         #if self.np_random.random() <= 1:
@@ -306,22 +306,32 @@ class FetchBulletSim(object):
             self.bullet_client.getLinkState(self.Bluepanda, pandaEndEffectorIndex, computeLinkVelocity=True), [0, 6, 7])
         gripper_state = self.get_gripper_state()
 
-        red_gripper_pos, red_gripper_velp, red_gripper_velr = np.take(
-            self.bullet_client.getLinkState(self.Redpanda, pandaEndEffectorIndex, computeLinkVelocity=True), [0, 6, 7])
-        red_gripper_state = self.get_red_gripper_state()
-
         obj_pos = self.bullet_client.getBasePositionAndOrientation(self.BluecubeId)[0]
         obj_velp, obj_velr = self.bullet_client.getBaseVelocity(self.BluecubeId)
 
         obj_rel_pos = np.array(obj_pos) - np.array(gripper_pos)
 
+        red_gripper_pos, red_gripper_velp, red_gripper_velr = np.take(
+            self.bullet_client.getLinkState(self.Redpanda, pandaEndEffectorIndex, computeLinkVelocity=True), [0, 6, 7])
+        red_gripper_state = self.get_red_gripper_state()
+
+        red_obj_pos = self.bullet_client.getBasePositionAndOrientation(self.RedcubeId)[0]
+        red_obj_velp, red_obj_velr = self.bullet_client.getBaseVelocity(self.RedcubeId)
+
+        red_obj_rel_pos = np.array(red_obj_pos) - np.array(red_gripper_pos)
+
         obs = np.concatenate([
             np.array(gripper_pos), np.array(obj_pos), obj_rel_pos, np.array([gripper_state]), np.array(obj_velp),
-            np.array(obj_velr), np.array(gripper_velp), np.array(gripper_velr)
+            np.array(obj_velr), np.array(gripper_velp), np.array(gripper_velr),
+            np.array(red_gripper_pos), np.array(red_obj_pos), red_obj_rel_pos, np.array([red_gripper_state]),
+            np.array(red_obj_velp), np.array(red_obj_velr), np.array(red_gripper_velp), np.array(red_gripper_velr)
         ])
+
+        pos = np.concatenate([np.array(obj_pos), np.array(red_obj_pos)])
+        gpos = np.concatenate([np.array(self.goal_pos), np.array(self.goal_pos)])
 
         return {
             'observation': obs.copy(),
-            'achieved_goal': np.array(obj_pos).copy(),
-            'desired_goal': self.goal_pos.copy()
+            'achieved_goal': pos.copy(),
+            'desired_goal': gpos.copy()
         }
