@@ -98,37 +98,37 @@ class FetchBulletEnv(gym.GoalEnv):
 
         return obs, reward, done, info
 
-    #def RedStep(self, action):
-        #action = np.clip(action, self.action_space.low, self.action_space.high)
-
-        #for i in range(self.n_substeps):
-            #if self.render_mode == 'DIRECT':
-                #obs = self.sim.step(action)
-            #elif self.render_mode == 'GUI':
-                #obs = self.sim.step(action, rendering=True, time_step=self.time_step)
-                #time.sleep(self.time_step)
-            #else:
-                #obs = None
-
-        #done = False
-        #info = {
-            #'is_success': self._is_success(obs['achieved_goal'], self.goal),
-        #}
-        #reward = self.compute_reward(obs['achieved_goal'], self.goal, info)
-
-        #return obs, reward, done, info
-
+    # check if the goal state has been achieved
     def _is_success(self, achieved_goal, desired_goal, thresholds=None):
         if thresholds is not None:
             return goal_distance(achieved_goal, desired_goal, thresholds)
         else:
             return goal_distance(achieved_goal, desired_goal, self.thresholds)
 
+    # check if blue gripper is grasping the blue box
+    def is_gripper_grasping(self):
+        return self.sim.detect_gripper_collision()
+
+    # check if red gripper is grasping the red box
+    def is_red_gripper_grasping(self):
+        return self.sim.detect_red_gripper_collision()
+
+    # check if both arms have picked up their respective boxes
+    def _pickup_success(self):
+        if self.is_gripper_grasping() == True:
+            if self.is_red_gripper_grasping() == True:
+                return True
+        return False
+
+    # compute value of reward for the time step
     def compute_reward(self, achieved_goal, desired_goal, info):
         if info is not None and 'thresholds' in info and info['thresholds'] is not None:
-            return int(self._is_success(achieved_goal, desired_goal, thresholds=info['thresholds'])) - 1
+            reward = (int(self._is_success(achieved_goal, desired_goal, thresholds=info['thresholds'])) - 1) * 2
         else:
-            return int(self._is_success(achieved_goal, desired_goal)) - 1
+            reward =  (int(self._is_success(achieved_goal, desired_goal)) - 1) * 2
+        if reward == -2:
+            reward += int(self._pickup_success())
+        return reward
 
     def update_markers(self, target):
         assert len(target) == 4
@@ -136,6 +136,3 @@ class FetchBulletEnv(gym.GoalEnv):
         marker_positions[0][2] += target[-1]
         marker_positions[1][2] -= target[-1]
         self.sim.move_finger_markers(marker_positions)
-
-    def is_gripper_grasping(self):
-        return self.sim.detect_gripper_collision()
