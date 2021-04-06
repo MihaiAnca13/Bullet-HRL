@@ -10,16 +10,17 @@ pandaNumDofs = 7
 RENDER_HEIGHT = 720
 RENDER_WIDTH = 960
 
+# lower limits for null space
 ll = [-7]*pandaNumDofs
-#upper limits for null space (todo: set them to proper range)
+# upper limits for null space
 ul = [7]*pandaNumDofs
-#joint ranges for null space (todo: set them to proper range)
+# joint ranges for null space
 jr = [7]*pandaNumDofs
-#restposes for null space
+# rest poses for null space
 jointPositions = [0.997, 0.177, 0.700, -1.935, -0.129, 2.068, 0.966, 0.040, 0.040]
-rp = jointPositions
+brp = jointPositions
 RedJointPositions = [0.997, 0.177, 0.700, -1.935, -0.129, 2.068, 0.966, 0.040, 0.040]
-
+rrp = RedJointPositions
 
 class FetchBulletSim(object):
     def __init__(self, bullet_client, offset, np_random):
@@ -41,17 +42,14 @@ class FetchBulletSim(object):
         self.BluecubeId = self.bullet_client.loadURDF("cube_blue.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
                                                   flags=flags)
 
-        # self.markerId = self.bullet_client.loadURDF("assets/marker.urdf", np.array([0.1, 0.2, -0.55]) + self.offset,
-        #                                             flags=flags)
-
         self.targetId = self.bullet_client.loadURDF("marker.urdf", np.array([0.15, 0.03, -0.55]) + self.offset,
                                                     flags=flags)
         self.bullet_client.changeVisualShape(self.targetId, -1, rgbaColor=[1, 0, 0, 1])
 
-        self.finger_marker1Id = self.bullet_client.loadURDF("finger_marker.urdf",
-                                                            np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
-        self.finger_marker2Id = self.bullet_client.loadURDF("finger_marker.urdf",
-                                                            np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
+        #self.finger_marker1Id = self.bullet_client.loadURDF("finger_marker.urdf",
+                                                            #np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
+       # self.finger_marker2Id = self.bullet_client.loadURDF("finger_marker.urdf",
+                                                            #np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
 
         # Loading the robotic arm
         orn = p.getQuaternionFromEuler([-math.pi/2, math.pi,0])
@@ -94,7 +92,7 @@ class FetchBulletSim(object):
                 self.bullet_client.resetJointState(self.Bluepanda, j, jointPositions[index])
                 index = index + 1
 
-        self.initial_state = self.bullet_client.saveState()
+        #self.initial_state = self.bullet_client.saveState()
 
         # create a constraint to keep the fingers centered
         c = self.bullet_client.createConstraint(self.Redpanda,
@@ -120,12 +118,14 @@ class FetchBulletSim(object):
                 self.bullet_client.resetJointState(self.Redpanda, j, RedJointPositions[index])
                 index = index + 1
 
-        self.Red_initial_state = self.bullet_client.saveState()
+        self.initial_state = self.bullet_client.saveState()
 
         # generate and save pose with object grasped
-        gripper_pos = self.bullet_client.getLinkState(self.Bluepanda, pandaEndEffectorIndex)[0]
+        blue_gripper_pos = self.bullet_client.getLinkState(self.Bluepanda, pandaEndEffectorIndex)[0]
         box_orientation = self.bullet_client.getQuaternionFromEuler([math.pi / 2., 0., 0.])
-        self.bullet_client.resetBasePositionAndOrientation(self.BluecubeId, gripper_pos, box_orientation)
+        self.bullet_client.resetBasePositionAndOrientation(self.BluecubeId, blue_gripper_pos, box_orientation)
+        red_gripper_pos = self.bullet_client.getLinkState(self.Redpanda, pandaEndEffectorIndex)[0]
+        self.bullet_client.resetBasePositionAndOrientation(self.RedcubeId, red_gripper_pos, box_orientation)
         self.secondary_state = self.bullet_client.saveState()
 
         self.goal_pos = None
@@ -157,7 +157,7 @@ class FetchBulletSim(object):
 
     def reset(self):
         # reset initial positions
-        if self.np_random.random() < 0.5:
+        if self.np_random.random() < 0.:
             self.bullet_client.restoreState(self.initial_state)
             self._randomize_obj_start()
         else:
@@ -184,7 +184,7 @@ class FetchBulletSim(object):
         target_gripper_pos = current_gripper_pos + pos_ctrl
 
         jointPoses = self.bullet_client.calculateInverseKinematics(self.Bluepanda, pandaEndEffectorIndex,
-                                                                   target_gripper_pos, rot_ctrl, ll, ul, jr, rp,
+                                                                   target_gripper_pos, rot_ctrl, ll, ul, jr, brp,
                                                                    maxNumIterations=20)
         #print('Blue:', jointPoses)
         # target for fingers
@@ -214,11 +214,11 @@ class FetchBulletSim(object):
     def get_gripper_state(self):
         return self.bullet_client.getJointState(self.Bluepanda, 9)[0]
 
-    def move_finger_markers(self, target_pos):
-        target_pos1, target_pos2 = target_pos
-        orn = self.bullet_client.getQuaternionFromEuler([0., 0., 0.])
-        self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, target_pos1, orn)
-        self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, target_pos2, orn)
+    #def move_finger_markers(self, target_pos):
+        # target_pos1, target_pos2 = target_pos
+        # orn = self.bullet_client.getQuaternionFromEuler([0., 0., 0.])
+        # self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, target_pos1, orn)
+        # self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, target_pos2, orn)
 
     def close(self):
         del self.bullet_client
@@ -250,7 +250,7 @@ class FetchBulletSim(object):
         target_gripper_pos = current_gripper_pos + pos_ctrl
 
         jointPoses = self.bullet_client.calculateInverseKinematics(self.Redpanda, pandaEndEffectorIndex,
-                                                                   target_gripper_pos, rot_ctrl, ll, ul, jr, rp,
+                                                                   target_gripper_pos, rot_ctrl, ll, ul, jr, rrp,
                                                                    maxNumIterations=20)
         #print('Red:', jointPoses)
         # target for fingers
@@ -280,11 +280,11 @@ class FetchBulletSim(object):
     def get_red_gripper_state(self):
         return self.bullet_client.getJointState(self.Redpanda, 9)[0]
 
-    def move_red_finger_markers(self, target_pos):
-        target_pos1, target_pos2 = target_pos
-        orn = self.bullet_client.getQuaternionFromEuler([0., 0., 0.])
-        self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, target_pos1, orn)
-        self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, target_pos2, orn)
+    # def move_red_finger_markers(self, target_pos):
+    #     target_pos1, target_pos2 = target_pos
+    #     orn = self.bullet_client.getQuaternionFromEuler([0., 0., 0.])
+    #     self.bullet_client.resetBasePositionAndOrientation(self.finger_marker1Id, target_pos1, orn)
+    #     self.bullet_client.resetBasePositionAndOrientation(self.finger_marker2Id, target_pos2, orn)
 
     def red_close(self):
         del self.bullet_client

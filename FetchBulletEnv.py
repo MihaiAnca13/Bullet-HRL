@@ -10,7 +10,7 @@ from pybullet_utils import bullet_client as bc
 
 from FetchBulletSim import FetchBulletSim
 
-
+# set goal distance threshold
 def goal_distance(state, target, thresholds):
     assert len(state) == len(target) == len(thresholds)
     for i in range(len(state)):
@@ -18,20 +18,24 @@ def goal_distance(state, target, thresholds):
             return False
     return True
 
-
+# define assets path
 assets_path = "Bullet-HRL/assets/"
 
-
+# create environment
 class FetchBulletEnv(gym.GoalEnv):
 
     def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.04, 0.04, 0.04, 0.04, 0.04, 0.04]), assets_path=assets_path, n_substeps=5):
+
+        # define environment properties
         self.time_step = time_step
         self.render_mode = render_mode
         self.thresholds = thresholds
         self.n_substeps = n_substeps
 
+        # generate starting seed
         self.seed(seed)
 
+        # initially render the environment
         if render_mode == 'DIRECT':
             bullet_instance = bc.BulletClient(p.DIRECT)
         elif render_mode == 'GUI':
@@ -39,17 +43,19 @@ class FetchBulletEnv(gym.GoalEnv):
             bullet_instance.configureDebugVisualizer(p.COV_ENABLE_Y_AXIS_UP, 1)
             bullet_instance.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
             bullet_instance.setPhysicsEngineParameter(maxNumCmdPer1ms=1000)
-            bullet_instance.resetDebugVisualizerCamera(cameraDistance=1.3, cameraYaw=38, cameraPitch=-22,
-                                                       cameraTargetPosition=[0.35, -0.13, 0])
+            bullet_instance.resetDebugVisualizerCamera(cameraDistance=2.3, cameraYaw=38, cameraPitch=-22,
+                                                       cameraTargetPosition=[0., -0.13, 0])
         else:
             sys.exit(f'FetchBulletEnv - render mode not supported: {render_mode}')
 
+        # set environment properties
         # bullet_instance.setAdditionalSearchPath(pd.getDataPath())
         bullet_instance.setAdditionalSearchPath(assets_path)
         bullet_instance.setTimeStep(time_step)
         bullet_instance.setGravity(0, -9.8, 0)
         self.sim = FetchBulletSim(bullet_instance, [0, 0, 0], self.np_random)
 
+        # setup simulator and initialise goals and observations
         obs = self.sim.reset()
         self.action_space = spaces.Box(-1., 1., shape=(8,), dtype='float32')
         self.observation_space = spaces.Dict(dict(
@@ -58,27 +64,32 @@ class FetchBulletEnv(gym.GoalEnv):
             observation=spaces.Box(-np.inf, np.inf, shape=obs['observation'].shape, dtype='float32'),
         ))
 
+    # define starting seed
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
 
+    # render simulator
     def render(self, mode=''):
         raise NotImplementedError()
 
+    # reset simulator
     def reset(self):
         obs = self.sim.reset()
         self.goal = self.sim.goal_pos.copy()
         return obs
 
+    # close simulator
     def close(self):
         self.sim.close()
 
+    # enact the next action and assess if the goal has been met
     def step(self, action):
 
+        # break the input action into the two arm actions respectively
         blue_action = np.clip(action[:4], self.action_space.low[:4], self.action_space.high[:4])
         red_action = np.clip(action[4:], self.action_space.low[4:], self.action_space.high[4:])
 
-        #action = np.clip(action, self.action_space.low, self.action_space.high)
-
+        # display action taken and get new observations
         for i in range(self.n_substeps):
             if self.render_mode == 'DIRECT':
                 obs = self.sim.step(blue_action)
@@ -90,6 +101,7 @@ class FetchBulletEnv(gym.GoalEnv):
             else:
                 obs = None
 
+        # assess if goal have been achieved and get reward
         done = False
         info = {
             'is_success': self._is_success(obs['achieved_goal'], self.goal),
@@ -130,9 +142,10 @@ class FetchBulletEnv(gym.GoalEnv):
             reward += int(self._pickup_success())
         return reward
 
+    # update marker in environment
     def update_markers(self, target):
         assert len(target) == 4
         marker_positions = [target[:-1].copy(), target[:-1].copy()]
         marker_positions[0][2] += target[-1]
         marker_positions[1][2] -= target[-1]
-        self.sim.move_finger_markers(marker_positions)
+       # self.sim.move_finger_markers(marker_positions)
