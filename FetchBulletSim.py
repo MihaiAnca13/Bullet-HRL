@@ -36,7 +36,7 @@ class FetchBulletSim(object):
         self.bullet_client.loadURDF("tray/traybox.urdf", [0 + offset[0], 0 + offset[1], -0.6 + offset[2]],
                                     [-0.5, -0.5, -0.5, 0.5], flags=flags)
 
-        self.RedcubeId = self.bullet_client.loadURDF("cube_red.urdf", np.array([0.1, 0.3, -0.9]) + self.offset,
+        self.RedcubeId = self.bullet_client.loadURDF("cube_red.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
                                                   flags=flags)
 
         self.BluecubeId = self.bullet_client.loadURDF("cube_blue.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
@@ -45,11 +45,6 @@ class FetchBulletSim(object):
         self.targetId = self.bullet_client.loadURDF("marker.urdf", np.array([0.15, 0.03, -0.55]) + self.offset,
                                                     flags=flags)
         self.bullet_client.changeVisualShape(self.targetId, -1, rgbaColor=[1, 0, 0, 1])
-
-        #self.finger_marker1Id = self.bullet_client.loadURDF("finger_marker.urdf",
-                                                            #np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
-       # self.finger_marker2Id = self.bullet_client.loadURDF("finger_marker.urdf",
-                                                            #np.array([0.2, 0.3, -0.5]) + self.offset, flags=flags)
 
         # Loading the robotic arm
         orn = p.getQuaternionFromEuler([-math.pi/2, math.pi,0])
@@ -137,30 +132,26 @@ class FetchBulletSim(object):
 
         self.reset()
 
+    # set goal positions for both arms
     def _sample_goal(self):
-        #self.goal_pos = self.np_random.uniform([-0.136, 0.03499, 0. - 0.718], [0.146, 0.0349, -0.457])
         self.goal_pos = np.array([0.0, 0.28, -0.6, 0.0, 0.28, -0.6])
         orn = self.fixed_orn
 
-        #if self.np_random.random() <= 1:
-            #self.goal_pos[1] += self.np_random.uniform(0.14, 0.23)  # height offset
-
         self.bullet_client.resetBasePositionAndOrientation(self.targetId, self.goal_pos[:3], orn)
 
+    # function to randomly spawn the boxes within the environment, but on their respective sides
     def _randomize_obj_start(self):
-        object_pos = self.np_random.uniform([-0.3, 0.03499, -0.3], [0.3, 0.03499, -0.2])
+        object_pos = self.np_random.uniform([-0.3, 0.05, -0.3], [0.3, 0.05, -0.2])
         self.bullet_client.resetBasePositionAndOrientation(self.BluecubeId, object_pos, self.fixed_orn)
-        red_object_pos = self.np_random.uniform([-0.3, 0.03499, -0.7], [0.3, 0.03499, -0.8])
+        red_object_pos = self.np_random.uniform([-0.3, 0.05, -0.8], [0.3, 0.05, -0.7])
         self.bullet_client.resetBasePositionAndOrientation(self.RedcubeId, red_object_pos, self.fixed_orn)
-        # (0.14620011083425424, 0.034989999999999744, -0.4577289226704112)
-        # (-0.13639202772104536, 0.03498999999999295, -0.7185703988375852)
 
+    # function to reset the arm positions and randomly spawn the boxes
     def reset(self):
-        # reset initial positions
-        if self.np_random.random() < 0.:
+        if self.np_random.random() < 0:     # spawn boxes randomly in the tray
             self.bullet_client.restoreState(self.initial_state)
             self._randomize_obj_start()
-        else:
+        else:                               # spawn boxes within the grippers
             self.bullet_client.restoreState(self.secondary_state)
 
         self._sample_goal()
@@ -169,11 +160,14 @@ class FetchBulletSim(object):
 
         return self._get_obs()
 
+    # execute actions for the blue arm
     def step(self, action, rendering=False, time_step=1. / 240.):
+        # ensure action received is only for the blue arm
         assert action.shape == (4,)
         action = action.copy()
         pos_ctrl, gripper_ctrl = action[:3], action[3]
 
+        # execute gripper control
         current_gripper_state = self.get_gripper_state()
         gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.0, 0.05)
 
