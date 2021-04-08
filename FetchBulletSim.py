@@ -41,10 +41,12 @@ class FetchBulletSim(object):
 
         self.BluecubeId = self.bullet_client.loadURDF("cube_blue.urdf", np.array([0.1, 0.3, -0.5]) + self.offset,
                                                   flags=flags)
-
-        self.targetId = self.bullet_client.loadURDF("marker.urdf", np.array([0.15, 0.03, -0.55]) + self.offset,
+        self.bluetargetId = self.bullet_client.loadURDF("marker.urdf", np.array([0.15, 0.03, -0.55]) + self.offset,
                                                     flags=flags)
-        self.bullet_client.changeVisualShape(self.targetId, -1, rgbaColor=[1, 0, 0, 1])
+        self.bullet_client.changeVisualShape(self.bluetargetId, -1, rgbaColor=[0.1, 0.3, 0.9, 1])
+        self.redtargetId = self.bullet_client.loadURDF("marker.urdf", np.array([0.15, 0.03, -0.55]) + self.offset,
+                                                       flags=flags)
+        self.bullet_client.changeVisualShape(self.redtargetId, -1, rgbaColor=[0.9, 0.1, 0.3, 1])
 
         # Loading the robotic arm
         orn = p.getQuaternionFromEuler([-math.pi/2, math.pi,0])
@@ -134,10 +136,11 @@ class FetchBulletSim(object):
 
     # set goal positions for both arms
     def _sample_goal(self):
-        self.goal_pos = np.array([0.0, 0.28, -0.6, 0.0, 0.28, -0.6])
+        self.goal_pos = np.array([0.0, 0.28, -0.5, 0.0, 0.28, -0.7])
         orn = self.fixed_orn
 
-        self.bullet_client.resetBasePositionAndOrientation(self.targetId, self.goal_pos[:3], orn)
+        self.bullet_client.resetBasePositionAndOrientation(self.bluetargetId, self.goal_pos[:3], orn)
+        self.bullet_client.resetBasePositionAndOrientation(self.redtargetId, self.goal_pos[3:], orn)
 
     # function to randomly spawn the boxes within the environment, but on their respective sides
     def _randomize_obj_start(self):
@@ -171,7 +174,7 @@ class FetchBulletSim(object):
         current_gripper_state = self.get_gripper_state()
         gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.0, 0.05)
 
-        pos_ctrl *= 0.01  # limit maximum change in position
+        pos_ctrl *= 0.1  # limit maximum change in position
         rot_ctrl = self.blue_fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
 
         current_gripper_pos = self.bullet_client.getLinkState(self.Bluepanda, pandaEndEffectorIndex)[0]
@@ -190,9 +193,9 @@ class FetchBulletSim(object):
             self.bullet_client.setJointMotorControl2(self.Bluepanda, i, self.bullet_client.POSITION_CONTROL, jointPoses[i],
                                                      force=5 * 240.)
 
-        self.bullet_client.stepSimulation()
-        if rendering:
-            time.sleep(time_step)
+        #self.bullet_client.stepSimulation()
+        #if rendering:
+        #    time.sleep(time_step)
 
         c = self.bullet_client.getBasePositionAndOrientation(self.BluecubeId)[0]
         if c[1] < 0.034:
@@ -237,7 +240,7 @@ class FetchBulletSim(object):
         current_gripper_state = self.get_red_gripper_state()
         gripper_ctrl = np.clip(current_gripper_state + gripper_ctrl, 0.0, 0.05)
 
-        pos_ctrl *= 0.01  # limit maximum change in position
+        pos_ctrl *= 0.1  # limit maximum change in position
         rot_ctrl = self.red_fixed_orn  # fixed rotation of the end effector, expressed as a quaternion
 
         current_gripper_pos = self.bullet_client.getLinkState(self.Redpanda, pandaEndEffectorIndex)[0]

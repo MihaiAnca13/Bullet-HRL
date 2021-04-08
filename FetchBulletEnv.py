@@ -24,7 +24,7 @@ assets_path = "Bullet-HRL/assets/"
 # create environment
 class FetchBulletEnv(gym.GoalEnv):
 
-    def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.06, 0.06, 0.06, 0.06, 0.06, 0.06]), assets_path=assets_path, n_substeps=5):
+    def __init__(self, render_mode='DIRECT', time_step=1. / 240., seed=None, thresholds=np.array([0.03, 0.03, 0.03, 0.03, 0.03, 0.03]), assets_path=assets_path, n_substeps=5):
 
         # define environment properties
         self.time_step = time_step
