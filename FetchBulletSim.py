@@ -49,7 +49,7 @@ class FetchBulletSim(object):
         self.bullet_client.changeVisualShape(self.redtargetId, -1, rgbaColor=[0.9, 0.1, 0.3, 1])
 
         # Loading the robotic arm
-        orn = p.getQuaternionFromEuler([-math.pi/2, math.pi,0])
+        orn = p.getQuaternionFromEuler([-math.pi/2, math.pi, 0])
         # eul = self.bullet_client.getEulerFromQuaternion([-0.5, -0.5, -0.5, 0.5])
         self.Redpanda = self.bullet_client.loadURDF("franka_panda/panda.urdf", np.array([0, 0, -1.4]) + self.offset, orn,
                                                  useFixedBase=True, flags=flags)
@@ -136,8 +136,13 @@ class FetchBulletSim(object):
 
     # set goal positions for both arms
     def _sample_goal(self):
-        self.goal_pos = np.array([0.0, 0.28, -0.5, 0.0, 0.28, -0.7])
+        #self.goal_pos = np.array([0.0, 0.28, -0.5, 0.0, 0.28, -0.7])
+        self.goal_pos = self.np_random.uniform([-0.3, 0.03499, -0.3, -0.3, 0.03499, -0.8], [0.3, 0.0349, -0.2, 0.3, 0.03499, -0.7])
         orn = self.fixed_orn
+
+        if self.np_random.random() <= 1:
+            self.goal_pos[1] += self.np_random.uniform(0.14, 0.23)  # height offset
+            self.goal_pos[4] += self.np_random.uniform(0.14, 0.23)
 
         self.bullet_client.resetBasePositionAndOrientation(self.bluetargetId, self.goal_pos[:3], orn)
         self.bullet_client.resetBasePositionAndOrientation(self.redtargetId, self.goal_pos[3:], orn)
@@ -151,7 +156,7 @@ class FetchBulletSim(object):
 
     # function to reset the arm positions and randomly spawn the boxes
     def reset(self):
-        if self.np_random.random() < 0:     # spawn boxes randomly in the tray
+        if self.np_random.random() < 0.5:     # spawn boxes randomly in the tray
             self.bullet_client.restoreState(self.initial_state)
             self._randomize_obj_start()
         else:                               # spawn boxes within the grippers
