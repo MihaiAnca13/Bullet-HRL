@@ -12,7 +12,7 @@ from FetchBulletSim import FetchBulletSim
 
 
 def goal_distance(state, target, thresholds):
-    assert len(state) == len(target) == len(thresholds)
+    assert len(state) == len(target) == len(thresholds), f"Mismatched lengths {len(state)}, {len(target)}, {len(thresholds)}"
     for i in range(len(state)):
         if abs(state[i] - target[i]) > thresholds[i]:
             return False
